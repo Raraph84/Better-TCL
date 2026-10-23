@@ -14,14 +14,26 @@ const StopsLayer = ({ stops }: { stops: any[] }) => {
         zoomend: () => setView(map.getBounds())
     });
 
-    const visibleStops = stops.filter((stop) => view.contains([stop.stop_lat, stop.stop_lon]));
-    if (visibleStops.length > 2500) return null;
+    const visibleParentStops = stops.filter(
+        (stop) => !stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon])
+    );
+    const visibleNonParentStops = stops.filter(
+        (stop) => stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon])
+    );
+    if (visibleNonParentStops.length < 500)
+        return visibleNonParentStops.map((stop) => (
+            <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
+                <Popup>{stop.stop_name}</Popup>
+            </CircleMarker>
+        ));
+    else if (visibleParentStops.length < 2500)
+        return visibleParentStops.map((stop) => (
+            <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
+                <Popup>{stop.stop_name}</Popup>
+            </CircleMarker>
+        ));
 
-    return visibleStops.map((stop) => (
-        <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
-            <Popup>{stop.stop_name}</Popup>
-        </CircleMarker>
-    ));
+    return null;
 };
 
 const App = () => {
