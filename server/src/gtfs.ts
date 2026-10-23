@@ -19,13 +19,8 @@ const toDateTime = (date: Date, t: string): Date =>
         Number(t.slice(6, 8))
     );
 
-export const getGtfs = async () => {
-    const req = await fetch("https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP", {
-        headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
-    });
-    if (!req.ok) throw new Error("Failed to fetch data from Grand Lyon API");
-    const data = await req.arrayBuffer();
-    const zip = await unzipper.Open.buffer(Buffer.from(data));
+export const parseGtfs = async (gtfs: Buffer) => {
+    const zip = await unzipper.Open.buffer(gtfs);
 
     const calendar = (await parse(zip.files.find((file) => file.path === "calendar.txt")!)).map((c) => ({
         service_id: c[0]!,
@@ -76,5 +71,6 @@ export const getGtfs = async () => {
         stop_timezone: s[8]!,
         wheelchair_boarding: s[9]!
     }));
+
     return { calendar, calendarDates, trips, stopTimes, stops };
 };
