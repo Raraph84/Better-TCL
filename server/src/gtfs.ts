@@ -63,13 +63,15 @@ export const parseGtfs = async (gtfs: Buffer) => {
         stop_id: s[0]!,
         stop_code: s[1]!,
         stop_name: s[2]!,
-        stop_lat: s[3]!,
-        stop_lon: s[4]!,
-        zone_id: s[5]!,
+        stop_desc: s[3]!,
+        zone_id: s[4]!,
+        stop_url: s[5]!,
         location_type: s[6]!,
         parent_station: s[7]!,
         stop_timezone: s[8]!,
-        wheelchair_boarding: s[9]!
+        wheelchair_boarding: s[9]!,
+        stop_lat: Number(s[10]),
+        stop_lon: Number(s[11])
     }));
 
     return { calendar, calendarDates, trips, stopTimes, stops };

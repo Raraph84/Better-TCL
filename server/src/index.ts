@@ -1,11 +1,13 @@
 import fs from "node:fs";
 import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
 import { parseGtfs } from "./gtfs.js";
 
 dotenv.config({ quiet: true });
 
 const app = express();
+app.use(cors());
 
 let gtfs = fs.existsSync("gtfs.zip")
     ? await parseGtfs(await fs.promises.readFile("gtfs.zip"))
