@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
 import "./index.scss";
 
 const StopsLayer = ({ stops }: { stops: any[] }) => {
     const map = useMap();
-    const [view, setView] = useState(() => ({ zoom: map.getZoom(), bounds: map.getBounds() }));
+    const [view, setView] = useState(() => map.getBounds());
 
     useMapEvents({
-        moveend: () => setView({ zoom: map.getZoom(), bounds: map.getBounds() }),
-        zoomend: () => setView({ zoom: map.getZoom(), bounds: map.getBounds() })
+        moveend: () => setView(map.getBounds()),
+        zoomend: () => setView(map.getBounds())
     });
 
-    const visibleStops = stops.filter((stop) => view.bounds.contains([stop.stop_lat, stop.stop_lon]));
+    const visibleStops = stops.filter((stop) => view.contains([stop.stop_lat, stop.stop_lon]));
     if (visibleStops.length > 2500) return null;
 
     return visibleStops.map((stop) => (
-        <Marker key={stop.stop_id} position={[stop.stop_lat, stop.stop_lon]}>
+        <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
             <Popup>{stop.stop_name}</Popup>
-        </Marker>
+        </CircleMarker>
     ));
 };
 

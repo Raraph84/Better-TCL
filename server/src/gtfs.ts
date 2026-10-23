@@ -39,6 +39,17 @@ export const parseGtfs = async (gtfs: Buffer) => {
         date: toDate(c[1]!),
         exception_type: c[2]!
     }));
+    const routes = (await parse(zip.files.find((file) => file.path === "routes.txt")!)).map((r) => ({
+        route_id: r[0]!,
+        agency_id: r[1]!,
+        route_short_name: r[2]!,
+        route_long_name: r[3]!,
+        route_desc: r[4]!,
+        route_type: r[5]!,
+        route_url: r[6]!,
+        route_color: r[7]!,
+        route_text_color: r[8]!
+    }));
     const trips = (await parse(zip.files.find((file) => file.path === "trips.txt")!)).map((t) => ({
         route_id: t[0]!,
         service_id: t[1]!,
@@ -74,5 +85,38 @@ export const parseGtfs = async (gtfs: Buffer) => {
         stop_lon: Number(s[11])
     }));
 
-    return { calendar, calendarDates, trips, stopTimes, stops };
+    return { calendar, calendarDates, routes, stopTimes, stops, trips };
 };
+
+/*
+const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const metersPerDegreeLat = 111320;
+    const latRad = (lat1 * Math.PI) / 180;
+    const dy = (lat2 - lat1) * metersPerDegreeLat;
+    const dx = (lon2 - lon1) * metersPerDegreeLat * Math.cos(latRad);
+    return Math.sqrt(dx * dx + dy * dy);
+};
+
+const stops = new Set<any>();
+for (const stop of gtfs.stops) {
+    let other = false;
+    for (const otherStop of stops) {
+        if (stop.stop_name !== otherStop.stop_name) continue;
+        if (distance(stop.stop_lat, stop.stop_lon, otherStop.stop_lat, otherStop.stop_lon) > 50) continue;
+        other = true;
+        console.log(
+            "Duplicate stop found:",
+            stop.stop_name,
+            stop.stop_lat,
+            stop.stop_lon,
+            otherStop.stop_lat,
+            otherStop.stop_lon
+        );
+    }
+    if (!other) {
+        console.log("Adding stop:", stop.stop_name, stop.stop_lat, stop.stop_lon);
+        stops.add(stop);
+    }
+}
+console.log(stops.size);
+*/
