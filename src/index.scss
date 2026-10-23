@@ -1,0 +1,23 @@
+@import url("https://api.fontshare.com/v2/css?f[]=chillax");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+button {
+    background: transparent;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    outline: none;
+}
+
+body {
+    background-color: #152a38;
+    font-family: "Chillax", sans-serif;
+    font-weight: 500;
+    color: white;
+}
