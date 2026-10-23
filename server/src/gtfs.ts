@@ -1,0 +1,80 @@
+import unzipper from "unzipper";
+
+const parse = async (file: unzipper.File) =>
+    (await file.buffer())
+        .toString()
+        .split(/\r\n|\n\r|\n|\r/)
+        .slice(1)
+        .filter((l) => l.length)
+        .map((l) => l.split(","));
+
+const toDate = (d: string): Date => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
+const toDateTime = (date: Date, t: string): Date =>
+    new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        Number(t.slice(0, 2)),
+        Number(t.slice(3, 5)),
+        Number(t.slice(6, 8))
+    );
+
+export const getGtfs = async () => {
+    const req = await fetch("https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP", {
+        headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
+    });
+    if (!req.ok) throw new Error("Failed to fetch data from Grand Lyon API");
+    const data = await req.arrayBuffer();
+    const zip = await unzipper.Open.buffer(Buffer.from(data));
+
+    const calendar = (await parse(zip.files.find((file) => file.path === "calendar.txt")!)).map((c) => ({
+        service_id: c[0]!,
+        monday: c[1]! === "1",
+        tuesday: c[2]! === "1",
+        wednesday: c[3]! === "1",
+        thursday: c[4]! === "1",
+        friday: c[5]! === "1",
+        saturday: c[6]! === "1",
+        sunday: c[7]! === "1",
+        start_date: toDate(c[8]!),
+        end_date: toDate(c[9]!)
+    }));
+    const calendarDates = (await parse(zip.files.find((file) => file.path === "calendar_dates.txt")!)).map((c) => ({
+        service_id: c[0]!,
+        date: toDate(c[1]!),
+        exception_type: c[2]!
+    }));
+    const trips = (await parse(zip.files.find((file) => file.path === "trips.txt")!)).map((t) => ({
+        route_id: t[0]!,
+        service_id: t[1]!,
+        trip_id: t[2]!,
+        trip_headsign: t[3]!,
+        trip_short_name: t[4]!,
+        direction_id: t[5]!,
+        shape_id: t[6]!,
+        wheelchair_accessible: t[7]!,
+        bikes_allowed: t[8]! === "1"
+    }));
+    const stopTimes = (await parse(zip.files.find((file) => file.path === "stop_times.txt")!)).map((s) => ({
+        trip_id: s[0]!,
+        arrival_time: s[1]!,
+        departure_time: s[2]!,
+        stop_id: s[3]!,
+        stop_sequence: s[4]!,
+        pickup_type: s[5]!,
+        drop_off_type: s[6]!
+    }));
+    const stops = (await parse(zip.files.find((file) => file.path === "stops.txt")!)).map((s) => ({
+        stop_id: s[0]!,
+        stop_code: s[1]!,
+        stop_name: s[2]!,
+        stop_lat: s[3]!,
+        stop_lon: s[4]!,
+        zone_id: s[5]!,
+        location_type: s[6]!,
+        parent_station: s[7]!,
+        stop_timezone: s[8]!,
+        wheelchair_boarding: s[9]!
+    }));
+    return { calendar, calendarDates, trips, stopTimes, stops };
+};
