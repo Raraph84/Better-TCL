@@ -31,7 +31,7 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
     ];
 };
 
-export const LinesLayer = ({ lines }: { lines: any }) => {
+export const LinesLayer = ({ features, visible }: { features: any[]; visible: boolean }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
 
@@ -41,8 +41,8 @@ export const LinesLayer = ({ lines }: { lines: any }) => {
     });
 
     const featuresWithBounds = useMemo<{ feature: any; bounds: [[number, number], [number, number]] }[]>(
-        () => lines?.features.map((feature: any) => ({ feature, bounds: getFeatureBounds(feature) })) ?? [],
-        [lines]
+        () => features?.map((feature: any) => ({ feature, bounds: getFeatureBounds(feature) })) ?? [],
+        [features]
     );
 
     const visibleFeatures = useMemo(
@@ -50,7 +50,7 @@ export const LinesLayer = ({ lines }: { lines: any }) => {
         [featuresWithBounds, view]
     );
 
-    if (!lines) return null;
+    if (!features || !visible) return null;
 
     return (
         <GeoJSON
