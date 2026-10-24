@@ -60,15 +60,11 @@ export const LinesLayer = ({ lines }: { lines: any }) => {
                 weight: 3,
                 opacity: 0.9
             })}
-            onEachFeature={(feature, layer) => {
-                const props = feature.properties ?? {};
-                layer.bindPopup(`${props.ligne} - ${props.nom_trace}`);
-            }}
         />
     );
 };
 
-export const StopsLayer = ({ stops }: { stops: any[] }) => {
+export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelectedStop: (stop: any) => void }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
 
@@ -77,24 +73,18 @@ export const StopsLayer = ({ stops }: { stops: any[] }) => {
         zoomend: () => setView(map.getBounds())
     });
 
-    const visibleParentStops = stops.filter(
-        (stop) => !stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon])
-    );
-    const visibleNonParentStops = stops.filter(
-        (stop) => stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon])
-    );
-    if (visibleNonParentStops.length < 250)
-        return visibleNonParentStops.map((stop) => (
-            <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
-                <Popup>{stop.stop_name}</Popup>
-            </CircleMarker>
-        ));
-    else if (visibleParentStops.length < 250)
-        return visibleParentStops.map((stop) => (
-            <CircleMarker key={stop.stop_id} center={[stop.stop_lat, stop.stop_lon]} radius={4} color="white">
-                <Popup>{stop.stop_name}</Popup>
-            </CircleMarker>
-        ));
+    let visibleStops = stops.filter((stop) => stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon]));
+    if (visibleStops.length > 250)
+        visibleStops = stops.filter((stop) => !stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon]));
+    if (visibleStops.length > 250) visibleStops = [];
 
-    return null;
+    return visibleStops.map((stop) => (
+        <CircleMarker
+            key={stop.stop_id}
+            center={[stop.stop_lat, stop.stop_lon]}
+            radius={6}
+            color="white"
+            eventHandlers={{ click: () => setSelectedStop(stop) }}
+        />
+    ));
 };
