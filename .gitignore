@@ -2,3 +2,4 @@ node_modules/
 dist/
 .env
 gtfs.zip
+lines.geojson

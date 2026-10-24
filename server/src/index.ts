@@ -9,6 +9,28 @@ dotenv.config({ quiet: true });
 const app = express();
 app.use(cors());
 
+const LINES_URLS = [
+    "https://data.grandlyon.com/geoserver/sytral/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=sytral:tcl_sytral.tcllignetram_2_0_0&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid",
+    "https://data.grandlyon.com/geoserver/sytral/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=sytral:tcl_sytral.tcllignemf_2_0_0&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid",
+    "https://data.grandlyon.com/geoserver/sytral/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=sytral:rx_rhonexpress.rxligne_2_0_0&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid",
+    "https://data.grandlyon.com/geoserver/sytral/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=sytral:tcl_sytral.tcllignefluv&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid",
+    "https://data.grandlyon.com/geoserver/sytral/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=sytral:tcl_sytral.tcllignebus_2_0_0&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid"
+];
+
+let linesGeojson = fs.existsSync("lines.geojson")
+    ? JSON.parse(await fs.promises.readFile("lines.geojson", "utf-8"))
+    : { type: "FeatureCollection", features: [] };
+
+const updateLines = async () => {
+    const collections = await Promise.all(LINES_URLS.map((url) => fetch(url).then((res) => res.json())));
+    linesGeojson.features = collections.flatMap((collection: any) => collection.features);
+    await fs.promises.writeFile("lines.geojson", JSON.stringify(linesGeojson));
+    console.log("Lines data updated successfully");
+};
+
+updateLines();
+setInterval(updateLines, 60 * 60 * 1000);
+
 let gtfs = fs.existsSync("gtfs.zip")
     ? await parseGtfs(await fs.promises.readFile("gtfs.zip"))
     : { calendar: [], calendarDates: [], routes: [], stopTimes: [], stops: [], trips: [] };
@@ -26,6 +48,8 @@ const updateGtfs = async () => {
 
 updateGtfs();
 setInterval(updateGtfs, 60 * 60 * 1000);
+
+app.get("/lines", (req, res) => res.json(linesGeojson));
 
 app.get("/gtfs/calendar", (req, res) => res.json({ calendar: gtfs.calendar }));
 app.get("/gtfs/calendar-dates", (req, res) => res.json({ calendarDates: gtfs.calendarDates }));
