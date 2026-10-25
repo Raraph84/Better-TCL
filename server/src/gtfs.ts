@@ -87,36 +87,3 @@ export const parseGtfs = async (gtfs: Buffer) => {
 
     return { calendar, calendarDates, routes, stopTimes, stops, trips };
 };
-
-/*
-const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const metersPerDegreeLat = 111320;
-    const latRad = (lat1 * Math.PI) / 180;
-    const dy = (lat2 - lat1) * metersPerDegreeLat;
-    const dx = (lon2 - lon1) * metersPerDegreeLat * Math.cos(latRad);
-    return Math.sqrt(dx * dx + dy * dy);
-};
-
-const stops = new Set<any>();
-for (const stop of gtfs.stops) {
-    let other = false;
-    for (const otherStop of stops) {
-        if (stop.stop_name !== otherStop.stop_name) continue;
-        if (distance(stop.stop_lat, stop.stop_lon, otherStop.stop_lat, otherStop.stop_lon) > 50) continue;
-        other = true;
-        console.log(
-            "Duplicate stop found:",
-            stop.stop_name,
-            stop.stop_lat,
-            stop.stop_lon,
-            otherStop.stop_lat,
-            otherStop.stop_lon
-        );
-    }
-    if (!other) {
-        console.log("Adding stop:", stop.stop_name, stop.stop_lat, stop.stop_lon);
-        stops.add(stop);
-    }
-}
-console.log(stops.size);
-*/

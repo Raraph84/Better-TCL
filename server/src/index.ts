@@ -1,7 +1,9 @@
 import fs from "node:fs";
+import http from "node:http";
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import { WebSocketServer } from "ws";
 import { parseGtfs } from "./gtfs.js";
 
 dotenv.config({ quiet: true });
@@ -58,4 +60,20 @@ app.get("/gtfs/stop-times", (req, res) => res.json({ stopTimes: gtfs.stopTimes }
 app.get("/gtfs/stops", (req, res) => res.json({ stops: gtfs.stops }));
 app.get("/gtfs/trips", (req, res) => res.json({ trips: gtfs.trips }));
 
-app.listen(4000, () => console.log("Server is running on http://localhost:4000"));
+const server = http.createServer(app);
+
+const trackingWss = new WebSocketServer({ noServer: true });
+trackingWss.on("connection", (ws) => {
+    console.log("Tracking client connected");
+    ws.on("close", () => console.log("Tracking client disconnected"));
+});
+
+server.on("upgrade", (req, socket, head) => {
+    if (req.url !== "/lines/tracking") {
+        socket.destroy();
+        return;
+    }
+    trackingWss.handleUpgrade(req, socket, head, (ws) => trackingWss.emit("connection", ws, req));
+});
+
+server.listen(4000, () => console.log("Server is running on http://localhost:4000"));
