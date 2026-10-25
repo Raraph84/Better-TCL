@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MapContainer, TileLayer } from "react-leaflet";
-import { LinesLayer, StopsLayer } from "./MapLayers.js";
+import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { Panel } from "./Panel.js";
 
 import "leaflet/dist/leaflet.css";
@@ -41,7 +41,7 @@ const App = () => {
                 if (message.event === "vehicle")
                     setTrackedVehicles((prev) => ({
                         ...prev,
-                        [message.data.MonitoredVehicleJourney.VehicleRef]: message.data
+                        [message.data.MonitoredVehicleJourney.VehicleRef.value]: message.data
                     }));
             });
             ws.addEventListener("close", (event) => {
@@ -99,6 +99,7 @@ const App = () => {
                     visible={filters.jd}
                 />
                 <StopsLayer stops={stops} setSelectedStop={(stop) => setPanel({ type: "stop", data: stop })} />
+                <VehiclesLayer vehicles={trackedVehicles} />
             </MapContainer>
 
             <Panel title={panel?.data?.stop_name} open={panel?.type === "stop"} onClose={() => setPanel(null)}></Panel>

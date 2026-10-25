@@ -64,6 +64,22 @@ export const LinesLayer = ({ features, visible }: { features: any[]; visible: bo
     );
 };
 
+export const VehiclesLayer = ({ vehicles }: { vehicles: { [key: string]: any } }) => {
+    return Object.values(vehicles).map((vehicle: any) => {
+        const { Latitude, Longitude } = vehicle.MonitoredVehicleJourney.VehicleLocation;
+        return (
+            <CircleMarker
+                key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
+                center={[Latitude, Longitude]}
+                radius={6}
+                color="white"
+                fillColor="#ff3b30"
+                fillOpacity={1}
+            />
+        );
+    });
+};
+
 export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelectedStop: (stop: any) => void }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());

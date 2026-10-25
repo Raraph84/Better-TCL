@@ -88,11 +88,11 @@ setInterval(async () => {
     }
     const data: any = await res.json();
     for (const vehicle of data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity) {
-        if (trackedVehicles[vehicle.MonitoredVehicleJourney.VehicleRef]?.RecordedAtTime === vehicle.RecordedAtTime)
-            continue;
+        const key = vehicle.MonitoredVehicleJourney.VehicleRef.value;
+        if (trackedVehicles[key]?.RecordedAtTime === vehicle.RecordedAtTime) continue;
+        trackedVehicles[key] = vehicle;
         for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
     }
-    trackedVehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity;
 }, 2000);
 
 server.listen(4000, () => console.log("Server is running on http://localhost:4000"));
