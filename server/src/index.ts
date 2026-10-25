@@ -65,6 +65,7 @@ const server = http.createServer(app);
 const trackingWss = new WebSocketServer({ noServer: true });
 trackingWss.on("connection", (ws) => {
     console.log("Tracking client connected");
+    for (const vehicle of Object.values(trackedVehicles)) ws.send(JSON.stringify({ event: "vehicle", data: vehicle }));
     ws.on("close", () => console.log("Tracking client disconnected"));
 });
 
@@ -75,5 +76,23 @@ server.on("upgrade", (req, socket, head) => {
     }
     trackingWss.handleUpgrade(req, socket, head, (ws) => trackingWss.emit("connection", ws, req));
 });
+
+let trackedVehicles: { [key: string]: any } = {};
+setInterval(async () => {
+    const res = await fetch("https://data.grandlyon.com/siri-lite/2.0/vehicle-monitoring.json", {
+        headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
+    });
+    if (!res.ok) {
+        console.error("Failed to fetch vehicle monitoring data");
+        return;
+    }
+    const data: any = await res.json();
+    for (const vehicle of data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity) {
+        if (trackedVehicles[vehicle.MonitoredVehicleJourney.VehicleRef]?.RecordedAtTime === vehicle.RecordedAtTime)
+            continue;
+        for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
+    }
+    trackedVehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity;
+}, 2000);
 
 server.listen(4000, () => console.log("Server is running on http://localhost:4000"));

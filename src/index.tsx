@@ -11,6 +11,7 @@ const App = () => {
     const [stops, setStops] = useState<any[]>([]);
     const [lines, setLines] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "stop" | "filters"; data: any } | null>(null);
+    const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
         met: boolean;
         fun: boolean;
@@ -29,6 +30,26 @@ const App = () => {
         fetch(import.meta.env.VITE_SERVER_HOST + "/lines")
             .then((res) => res.json())
             .then((lines) => setLines(lines.features));
+    }, []);
+
+    useEffect(() => {
+        const connect = () => {
+            const ws = new WebSocket(import.meta.env.VITE_SERVER_HOST.replace("http", "ws") + "/lines/tracking");
+            ws.addEventListener("open", () => console.log("Connected to tracking WebSocket"));
+            ws.addEventListener("message", (event) => {
+                const message = JSON.parse(event.data);
+                if (message.event === "vehicle")
+                    setTrackedVehicles((prev) => ({
+                        ...prev,
+                        [message.data.MonitoredVehicleJourney.VehicleRef]: message.data
+                    }));
+            });
+            ws.addEventListener("close", (event) => {
+                console.log("WebSocket closed, reconnecting...", event.code, event.reason);
+                setTimeout(connect, 1000);
+            });
+        };
+        connect();
     }, []);
 
     return (
