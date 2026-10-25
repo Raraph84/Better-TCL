@@ -64,16 +64,24 @@ export const LinesLayer = ({ features, visible }: { features: any[]; visible: bo
     );
 };
 
-export const VehiclesLayer = ({ vehicles }: { vehicles: { [key: string]: any } }) => {
+export const VehiclesLayer = ({ routes, vehicles }: { routes: any; vehicles: { [key: string]: any } }) => {
     return Object.values(vehicles).map((vehicle: any) => {
-        const { Latitude, Longitude } = vehicle.MonitoredVehicleJourney.VehicleLocation;
+        const route = routes.find(
+            (r: any) =>
+                r.route_id ===
+                vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
+        );
+        if (!route) console.warn("Route not found for vehicle", vehicle.MonitoredVehicleJourney.VehicleRef.value);
         return (
             <CircleMarker
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
-                center={[Latitude, Longitude]}
+                center={[
+                    vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                    vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
+                ]}
                 radius={6}
-                color="white"
-                fillColor="#ff3b30"
+                stroke={false}
+                fillColor={route?.route_color ? `#${route.route_color}` : "#aaaaaa"}
                 fillOpacity={1}
             />
         );

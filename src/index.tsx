@@ -9,6 +9,7 @@ import "./index.scss";
 
 const App = () => {
     const [stops, setStops] = useState<any[]>([]);
+    const [routes, setRoutes] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "stop" | "filters"; data: any } | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
@@ -27,6 +28,9 @@ const App = () => {
         fetch(import.meta.env.VITE_SERVER_HOST + "/gtfs/stops")
             .then((res) => res.json())
             .then((res) => setStops(res.stops));
+        fetch(import.meta.env.VITE_SERVER_HOST + "/gtfs/routes")
+            .then((res) => res.json())
+            .then((res) => setRoutes(res.routes));
         fetch(import.meta.env.VITE_SERVER_HOST + "/lines")
             .then((res) => res.json())
             .then((lines) => setLines(lines.features));
@@ -99,7 +103,7 @@ const App = () => {
                     visible={filters.jd}
                 />
                 <StopsLayer stops={stops} setSelectedStop={(stop) => setPanel({ type: "stop", data: stop })} />
-                <VehiclesLayer vehicles={trackedVehicles} />
+                <VehiclesLayer routes={routes} vehicles={trackedVehicles} />
             </MapContainer>
 
             <Panel title={panel?.data?.stop_name} open={panel?.type === "stop"} onClose={() => setPanel(null)}></Panel>
