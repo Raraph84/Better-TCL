@@ -152,15 +152,15 @@ export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelect
         zoomend: () => setView(map.getBounds())
     });
 
-    let visibleStops = stops.filter((stop) => stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon]));
+    let visibleStops = stops.filter((stop) => stop.parent && view.contains([stop.lat, stop.lon]));
     if (visibleStops.length > 250)
-        visibleStops = stops.filter((stop) => !stop.parent_station && view.contains([stop.stop_lat, stop.stop_lon]));
+        visibleStops = stops.filter((stop) => !stop.parent && view.contains([stop.lat, stop.lon]));
     if (visibleStops.length > 250) visibleStops = [];
 
     return visibleStops.map((stop) => (
         <CircleMarker
-            key={stop.stop_id}
-            center={[stop.stop_lat, stop.stop_lon]}
+            key={stop.id}
+            center={[stop.lat, stop.lon]}
             radius={5}
             color="white"
             eventHandlers={{ click: () => setSelectedStop(stop) }}

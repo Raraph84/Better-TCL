@@ -10,7 +10,7 @@ import "./index.scss";
 const App = () => {
     const [stops, setStops] = useState<any[]>([]);
     const [routes, setRoutes] = useState<any>(null);
-    const [lines, setLines] = useState<any>(null);
+    const [linesGeojson, setLinesGeojson] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "filters" | "stop" | "trip"; data: any } | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
@@ -25,15 +25,15 @@ const App = () => {
     }>({ met: true, fun: true, tra: true, trambus: true, navi: true, rx: true, bus: false, jd: false });
 
     useEffect(() => {
-        fetch(import.meta.env.VITE_SERVER_HOST + "/gtfs/stops")
+        fetch(import.meta.env.VITE_SERVER_HOST + "/stops")
             .then((res) => res.json())
             .then((res) => setStops(res.stops));
         fetch(import.meta.env.VITE_SERVER_HOST + "/gtfs/routes")
             .then((res) => res.json())
             .then((res) => setRoutes(res.routes));
-        fetch(import.meta.env.VITE_SERVER_HOST + "/lines")
+        fetch(import.meta.env.VITE_SERVER_HOST + "/lines/geojson")
             .then((res) => res.json())
-            .then((lines) => setLines(lines.features));
+            .then((lines) => setLinesGeojson(lines.features));
     }, []);
 
     useEffect(() => {
@@ -61,43 +61,43 @@ const App = () => {
             <MapContainer center={[45.75, 4.85]} zoom={13} zoomControl={false}>
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/stamen_toner_dark/{z}/{x}/{y}{r}.png" /> 
                 <LinesLayer
-                    features={lines?.filter((f: any) => f.properties.famille_transport === "MET")}
+                    features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "MET")}
                     visible={filters.met}
                 />
                 <LinesLayer
-                    features={lines?.filter((f: any) => f.properties.famille_transport === "FUN")}
+                    features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "FUN")}
                     visible={filters.fun}
                 />
                 <LinesLayer
-                    features={lines?.filter(
+                    features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne !== "RX"
                     )}
                     visible={filters.tra}
                 />
                 <LinesLayer
-                    features={lines?.filter(
+                    features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^TB\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.trambus}
                 />
                 <LinesLayer
-                    features={lines?.filter((f: any) => f.properties.famille_transport === "BAT")}
+                    features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "BAT")}
                     visible={filters.navi}
                 />
                 <LinesLayer
-                    features={lines?.filter(
+                    features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne === "RX"
                     )}
                     visible={filters.rx}
                 />
                 <LinesLayer
-                    features={lines?.filter(
+                    features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && !/^(TB|JD)\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.bus}
                 />
                 <LinesLayer
-                    features={lines?.filter(
+                    features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^JD\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.jd}
@@ -107,7 +107,7 @@ const App = () => {
             </MapContainer>
 
             <Panel
-                title={"Arrêt " + panel?.data?.stop_name}
+                title={"Arrêt " + panel?.data?.name}
                 open={panel?.type === "stop"}
                 onClose={() => setPanel(null)}
             ></Panel>

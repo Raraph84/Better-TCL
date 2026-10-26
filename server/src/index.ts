@@ -63,14 +63,9 @@ const updateGtfs = async () => {
 updateGtfs();
 setInterval(updateGtfs, 60 * 60 * 1000);
 
-app.get("/lines", (req, res) => res.json(linesGeojson));
+app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
-app.get("/gtfs/calendar", (req, res) => res.json({ calendar: gtfs.calendar }));
-app.get("/gtfs/calendar-dates", (req, res) => res.json({ calendarDates: gtfs.calendarDates }));
 app.get("/gtfs/routes", (req, res) => res.json({ routes: gtfs.routes }));
-app.get("/gtfs/stop-times", (req, res) => res.json({ stopTimes: gtfs.stopTimes }));
-app.get("/gtfs/stops", (req, res) => res.json({ stops: gtfs.stops }));
-app.get("/gtfs/trips", (req, res) => res.json({ trips: gtfs.trips }));
 
 const computeServices = (trips: any[], startDate: number, endDate: number) => {
     const serviceIds = new Set(trips.map((trip) => trip.service_id));
@@ -169,6 +164,19 @@ app.get("/lines/:id", (req, res) => {
         color: gtfsRoute.route_color,
         trips: trips.slice(Math.max(0, nextTripIndex - 10), nextTripIndex + 10),
         stops
+    });
+});
+
+app.get("/stops", (req, res) => {
+    res.json({
+        stops: gtfs.stops.map((stop) => ({
+            id: stop.stop_id,
+            name: stop.stop_name,
+            zone: stop.zone_id,
+            parent: stop.parent_station,
+            lat: stop.stop_lat,
+            lon: stop.stop_lon
+        }))
     });
 });
 
