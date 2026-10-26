@@ -9,7 +9,7 @@ import "leaflet/dist/leaflet.css";
 import "./index.scss";
 
 const App = () => {
-    const [stops, setStops] = useState<any[]>([]);
+    const [stops, setStops] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; data: any } | null>(null);
@@ -103,8 +103,8 @@ const App = () => {
                     )}
                     visible={filters.jd}
                 />
-                <StopsLayer stops={stops} setSelectedStop={(stop) => setPanel({ type: "stop", data: stop })} />
-                <VehiclesLayer lines={lines} vehicles={trackedVehicles} setPanel={setPanel} />
+                <StopsLayer stops={stops ?? []} setPanel={setPanel} />
+                <VehiclesLayer lines={lines ?? []} vehicles={Object.values(trackedVehicles)} setPanel={setPanel} />
             </MapContainer>
 
             <LinePanel line={panel?.type === "line" ? panel?.data : null} setPanel={setPanel} />

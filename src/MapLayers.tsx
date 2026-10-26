@@ -34,6 +34,7 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
 export const LinesLayer = ({ features, visible }: { features: any[]; visible: boolean }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
+    const [version, setVersion] = useState(0);
 
     useMapEvents({
         moveend: () => setView(map.getBounds()),
@@ -50,10 +51,13 @@ export const LinesLayer = ({ features, visible }: { features: any[]; visible: bo
         [featuresWithBounds, view]
     );
 
-    if (!features || !visible) return null;
+    useEffect(() => setVersion((v) => v + 1), [visibleFeatures]);
+
+    if (!visible) return null;
 
     return (
         <GeoJSON
+            key={version}
             data={{ type: "FeatureCollection", features: visibleFeatures } as any}
             style={(feature) => ({
                 color: feature?.properties.couleur_hex ?? "#ffffff",
@@ -70,6 +74,7 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
         vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
     ];
 
+    const [version, setVersion] = useState(0);
     const [position, setPosition] = useState<[number, number]>(target);
     const fromRef = useRef<[number, number]>(target);
     const targetRef = useRef<[number, number]>(target);
@@ -103,8 +108,11 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
         };
     }, [target[0], target[1]]);
 
+    useEffect(() => setVersion((v) => v + 1), [color]);
+
     return (
         <CircleMarker
+            key={version}
             center={position}
             radius={7}
             stroke={false}
@@ -122,28 +130,26 @@ export const VehiclesLayer = ({
 }: {
     lines: any;
     vehicles: { [key: string]: any };
-    setPanel: (panel: { type: "trip"; data: any }) => void;
+    setPanel: (panel: any) => void;
 }) => {
-    if (!lines || !vehicles) return null;
-    return Object.values(vehicles).map((vehicle: any) => {
+    return vehicles.map((vehicle: any) => {
         const line = lines.find(
             (line: any) =>
                 line.id ===
                 vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
         );
-        if (!line) console.warn("Route not found for vehicle", vehicle.MonitoredVehicleJourney.VehicleRef.value);
         return (
             <VehicleMarker
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
-                color={line?.color ? `#${line.color}` : "#aaaaaa"}
+                color={line ? `#${line.color}` : "#aaaaaa"}
                 onClick={() => setPanel({ type: "trip", data: { line, vehicle } })}
             />
         );
     });
 };
 
-export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelectedStop: (stop: any) => void }) => {
+export const StopsLayer = ({ stops, setPanel }: { stops: any[]; setPanel: (panel: any) => void }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
 
@@ -163,7 +169,7 @@ export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelect
             center={[stop.lat, stop.lon]}
             radius={5}
             color="white"
-            eventHandlers={{ click: () => setSelectedStop(stop) }}
+            eventHandlers={{ click: () => setPanel({ type: "stop", data: stop }) }}
         />
     ));
 };
