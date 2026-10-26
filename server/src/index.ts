@@ -65,8 +65,6 @@ setInterval(updateGtfs, 60 * 60 * 1000);
 
 app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
-app.get("/gtfs/routes", (req, res) => res.json({ routes: gtfs.routes }));
-
 const computeServices = (trips: any[], startDate: number, endDate: number) => {
     const serviceIds = new Set(trips.map((trip) => trip.service_id));
     const services = gtfs.calendar.filter((calendar) => serviceIds.has(calendar.service_id));
@@ -104,6 +102,17 @@ const computeTrips = (route: any, startDate: number, endDate: number) => {
     }
     return computedTrips;
 };
+
+app.get("/lines", (req, res) => {
+    res.json({
+        lines: gtfs.routes.map((route) => ({
+            id: route.route_id,
+            shortName: route.route_short_name,
+            longName: route.route_long_name,
+            color: route.route_color
+        }))
+    });
+});
 
 app.get("/lines/:id", (req, res) => {
     const gtfsRoute = gtfs.routes.find((r) => r.route_id === req.params.id);

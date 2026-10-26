@@ -9,7 +9,7 @@ import "./index.scss";
 
 const App = () => {
     const [stops, setStops] = useState<any[]>([]);
-    const [routes, setRoutes] = useState<any>(null);
+    const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "filters" | "stop" | "trip"; data: any } | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
@@ -28,9 +28,9 @@ const App = () => {
         fetch(import.meta.env.VITE_SERVER_HOST + "/stops")
             .then((res) => res.json())
             .then((res) => setStops(res.stops));
-        fetch(import.meta.env.VITE_SERVER_HOST + "/gtfs/routes")
+        fetch(import.meta.env.VITE_SERVER_HOST + "/lines")
             .then((res) => res.json())
-            .then((res) => setRoutes(res.routes));
+            .then((res) => setLines(res.lines));
         fetch(import.meta.env.VITE_SERVER_HOST + "/lines/geojson")
             .then((res) => res.json())
             .then((lines) => setLinesGeojson(lines.features));
@@ -103,7 +103,7 @@ const App = () => {
                     visible={filters.jd}
                 />
                 <StopsLayer stops={stops} setSelectedStop={(stop) => setPanel({ type: "stop", data: stop })} />
-                <VehiclesLayer routes={routes} vehicles={trackedVehicles} setPanel={setPanel} />
+                <VehiclesLayer lines={lines} vehicles={trackedVehicles} setPanel={setPanel} />
             </MapContainer>
 
             <Panel
@@ -112,7 +112,7 @@ const App = () => {
                 onClose={() => setPanel(null)}
             ></Panel>
             <Panel
-                title={"Service - Ligne " + panel?.data?.route?.route_short_name}
+                title={"Service - Ligne " + panel?.data?.route?.shortName}
                 open={panel?.type === "trip"}
                 onClose={() => setPanel(null)}
             ></Panel>

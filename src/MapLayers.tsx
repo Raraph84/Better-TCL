@@ -116,28 +116,28 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
 };
 
 export const VehiclesLayer = ({
-    routes,
+    lines,
     vehicles,
     setPanel
 }: {
-    routes: any;
+    lines: any;
     vehicles: { [key: string]: any };
     setPanel: (panel: { type: "trip"; data: any }) => void;
 }) => {
-    if (!routes || !vehicles) return null;
+    if (!lines || !vehicles) return null;
     return Object.values(vehicles).map((vehicle: any) => {
-        const route = routes.find(
-            (r: any) =>
-                r.route_id ===
+        const line = lines.find(
+            (line: any) =>
+                line.id ===
                 vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
         );
-        if (!route) console.warn("Route not found for vehicle", vehicle.MonitoredVehicleJourney.VehicleRef.value);
+        if (!line) console.warn("Route not found for vehicle", vehicle.MonitoredVehicleJourney.VehicleRef.value);
         return (
             <VehicleMarker
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
-                color={route?.route_color ? `#${route.route_color}` : "#aaaaaa"}
-                onClick={() => setPanel({ type: "trip", data: { vehicle, route } })}
+                color={line?.color ? `#${line.color}` : "#aaaaaa"}
+                onClick={() => setPanel({ type: "trip", data: { vehicle, route: line } })}
             />
         );
     });
