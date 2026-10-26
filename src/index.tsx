@@ -13,6 +13,7 @@ const App = () => {
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; data: any } | null>(null);
+    const [forcedLines, setForcedLines] = useState<string[] | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
         met: boolean;
@@ -63,53 +64,68 @@ const App = () => {
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/stamen_toner_dark/{z}/{x}/{y}{r}.png" /> 
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "MET")}
-                    visible={filters.met}
+                    visible={filters.met && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "FUN")}
-                    visible={filters.fun}
+                    visible={filters.fun && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne !== "RX"
                     )}
-                    visible={filters.tra}
+                    visible={filters.tra && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^TB\d+$/.test(f.properties.ligne)
                     )}
-                    visible={filters.trambus}
+                    visible={filters.trambus && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "BAT")}
-                    visible={filters.navi}
+                    visible={filters.navi && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne === "RX"
                     )}
-                    visible={filters.rx}
+                    visible={filters.rx && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && !/^(TB|JD)\d+$/.test(f.properties.ligne)
                     )}
-                    visible={filters.bus}
+                    visible={filters.bus && !forcedLines}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^JD\d+$/.test(f.properties.ligne)
                     )}
-                    visible={filters.jd}
+                    visible={filters.jd && !forcedLines}
+                />
+                <LinesLayer
+                    features={linesGeojson?.filter((f: any) => forcedLines?.includes(f.properties.code_ligne))}
                 />
                 <StopsLayer stops={stops ?? []} setPanel={setPanel} />
                 <VehiclesLayer lines={lines ?? []} vehicles={Object.values(trackedVehicles)} setPanel={setPanel} />
             </MapContainer>
 
-            <LinePanel line={panel?.type === "line" ? panel?.data : null} setPanel={setPanel} />
-            <StopPanel stop={panel?.type === "stop" ? panel?.data : null} setPanel={setPanel} />
-            <TripPanel trip={panel?.type === "trip" ? panel?.data : null} setPanel={setPanel} />
+            <LinePanel
+                line={panel?.type === "line" ? panel?.data : null}
+                setPanel={setPanel}
+                setForcedLines={setForcedLines}
+            />
+            <StopPanel
+                stop={panel?.type === "stop" ? panel?.data : null}
+                setPanel={setPanel}
+                setForcedLines={setForcedLines}
+            />
+            <TripPanel
+                trip={panel?.type === "trip" ? panel?.data : null}
+                setPanel={setPanel}
+                setForcedLines={setForcedLines}
+            />
 
             <div className="right-buttons">
                 <button onClick={() => setPanel({ type: "filters", data: null })}>
