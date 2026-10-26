@@ -33,12 +33,10 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
 
 export const LinesLayer = ({
     features,
-    visible = true,
     lines,
     setPanel
 }: {
     features: any[];
-    visible?: boolean;
     lines: any;
     setPanel: (panel: { type: any; data: any }) => void;
 }) => {
@@ -52,7 +50,7 @@ export const LinesLayer = ({
     });
 
     const featuresWithBounds = useMemo<{ feature: any; bounds: [[number, number], [number, number]] }[]>(
-        () => features?.map((feature: any) => ({ feature, bounds: getFeatureBounds(feature) })) ?? [],
+        () => features.map((feature: any) => ({ feature, bounds: getFeatureBounds(feature) })),
         [features]
     );
 
@@ -62,8 +60,6 @@ export const LinesLayer = ({
     );
 
     useEffect(() => setVersion((v) => v + 1), [visibleFeatures]);
-
-    if (!visible) return null;
 
     return (
         <GeoJSON
