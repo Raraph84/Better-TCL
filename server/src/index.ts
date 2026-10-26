@@ -193,11 +193,13 @@ app.get("/stops/:id", (req, res) => {
     const stop = gtfs.stops.find((s) => s.stop_id === req.params.id);
     if (!stop) return res.status(404).json({ error: "Stop not found" });
 
+    const stopId = stop.parent_station ? stop.parent_station : stop.stop_id;
+    const stopsIds = new Set<string>(gtfs.stops.filter((s) => s.parent_station === stopId).map((s) => s.stop_id));
     const tripsIds = new Set<string>();
     const routesIds = new Set<string>();
     const lines = [];
     for (const stopTime of gtfs.stopTimes) {
-        if (stopTime.stop_id !== stop.stop_id) continue;
+        if (!stopsIds.has(stopTime.stop_id)) continue;
         tripsIds.add(stopTime.trip_id);
     }
     for (const trip of gtfs.trips) {
@@ -213,6 +215,8 @@ app.get("/stops/:id", (req, res) => {
             color: route.route_color
         });
     }
+
+    lines.sort((a, b) => a.shortName.localeCompare(b.shortName, undefined, { numeric: true }));
 
     res.json({
         id: stop.stop_id,
