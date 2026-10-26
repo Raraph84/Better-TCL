@@ -11,7 +11,7 @@ const App = () => {
     const [stops, setStops] = useState<any[]>([]);
     const [routes, setRoutes] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
-    const [panel, setPanel] = useState<{ type: "stop" | "filters"; data: any } | null>(null);
+    const [panel, setPanel] = useState<{ type: "filters" | "stop" | "trip"; data: any } | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
         met: boolean;
@@ -103,10 +103,19 @@ const App = () => {
                     visible={filters.jd}
                 />
                 <StopsLayer stops={stops} setSelectedStop={(stop) => setPanel({ type: "stop", data: stop })} />
-                <VehiclesLayer routes={routes} vehicles={trackedVehicles} />
+                <VehiclesLayer routes={routes} vehicles={trackedVehicles} setPanel={setPanel} />
             </MapContainer>
 
-            <Panel title={panel?.data?.stop_name} open={panel?.type === "stop"} onClose={() => setPanel(null)}></Panel>
+            <Panel
+                title={"Arrêt " + panel?.data?.stop_name}
+                open={panel?.type === "stop"}
+                onClose={() => setPanel(null)}
+            ></Panel>
+            <Panel
+                title={"Service - Ligne " + panel?.data?.route?.route_short_name}
+                open={panel?.type === "trip"}
+                onClose={() => setPanel(null)}
+            ></Panel>
 
             <div className="right-buttons">
                 <button onClick={() => setPanel({ type: "filters", data: null })}>

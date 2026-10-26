@@ -64,7 +64,7 @@ export const LinesLayer = ({ features, visible }: { features: any[]; visible: bo
     );
 };
 
-const VehicleMarker = ({ vehicle, color }: { vehicle: any; color: string }) => {
+const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: string; onClick: () => void }) => {
     const target: [number, number] = [
         vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
         vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
@@ -103,12 +103,30 @@ const VehicleMarker = ({ vehicle, color }: { vehicle: any; color: string }) => {
         };
     }, [target[0], target[1]]);
 
-    return <CircleMarker center={position} radius={7} stroke={false} fillColor={color} fillOpacity={1}  />;
+    return (
+        <CircleMarker
+            center={position}
+            radius={7}
+            stroke={false}
+            fillColor={color}
+            fillOpacity={1}
+            eventHandlers={{ click: onClick }}
+        />
+    );
 };
 
-export const VehiclesLayer = ({ routes, vehicles }: { routes: any; vehicles: { [key: string]: any } }) => {
+export const VehiclesLayer = ({
+    routes,
+    vehicles,
+    setPanel
+}: {
+    routes: any;
+    vehicles: { [key: string]: any };
+    setPanel: (panel: { type: "trip"; data: any }) => void;
+}) => {
+    if (!routes || !vehicles) return null;
     return Object.values(vehicles).map((vehicle: any) => {
-        const route = routes?.find(
+        const route = routes.find(
             (r: any) =>
                 r.route_id ===
                 vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
@@ -119,6 +137,7 @@ export const VehiclesLayer = ({ routes, vehicles }: { routes: any; vehicles: { [
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
                 color={route?.route_color ? `#${route.route_color}` : "#aaaaaa"}
+                onClick={() => setPanel({ type: "trip", data: { vehicle, route } })}
             />
         );
     });
