@@ -9,7 +9,7 @@ const parse = async (file: unzipper.File) =>
         .map((l) => l.split(","));
 
 const toDate = (d: string): Date => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
-const toDateTime = (date: Date, t: string): Date =>
+export const toDateTime = (date: Date, t: string): Date =>
     new Date(
         date.getFullYear(),
         date.getMonth(),

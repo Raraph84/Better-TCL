@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
-import { parseGtfs } from "./gtfs.js";
+import { parseGtfs, toDateTime } from "./gtfs.js";
 
 dotenv.config({ quiet: true });
 
@@ -59,6 +59,105 @@ app.get("/gtfs/routes", (req, res) => res.json({ routes: gtfs.routes }));
 app.get("/gtfs/stop-times", (req, res) => res.json({ stopTimes: gtfs.stopTimes }));
 app.get("/gtfs/stops", (req, res) => res.json({ stops: gtfs.stops }));
 app.get("/gtfs/trips", (req, res) => res.json({ trips: gtfs.trips }));
+
+const computeServices = (trips: any[], startDate: number, endDate: number) => {
+    const serviceIds = new Set(trips.map((trip) => trip.service_id));
+    const services = gtfs.calendar.filter((calendar) => serviceIds.has(calendar.service_id));
+    const servicesDates = gtfs.calendarDates.filter((calendarDate) => serviceIds.has(calendarDate.service_id));
+
+    const computedServices = [];
+    for (const service of services) {
+        for (let date = new Date(service.start_date); date <= service.end_date; date.setDate(date.getDate() + 1)) {
+            if (date.getTime() < startDate || date.getTime() >= endDate) continue;
+            if (date.getDay() === 0 && !service.sunday) continue;
+            if (date.getDay() === 1 && !service.monday) continue;
+            if (date.getDay() === 2 && !service.tuesday) continue;
+            if (date.getDay() === 3 && !service.wednesday) continue;
+            if (date.getDay() === 4 && !service.thursday) continue;
+            if (date.getDay() === 5 && !service.friday) continue;
+            if (date.getDay() === 6 && !service.saturday) continue;
+            const serviceDate = servicesDates.find(
+                (cd) => cd.service_id === service.service_id && cd.date.getTime() === date.getTime()
+            );
+            if (serviceDate?.exception_type === "2") continue;
+            computedServices.push({ date: new Date(date), service });
+        }
+    }
+    return computedServices;
+};
+
+const computeTrips = (route: any, startDate: number, endDate: number) => {
+    const trips = gtfs.trips.filter((trip) => trip.route_id === route.route_id);
+    const services = computeServices(trips, startDate, endDate);
+
+    const computedTrips = [];
+    for (const service of services) {
+        const serviceTrips = trips.filter((trip) => trip.service_id === service.service.service_id);
+        for (const trip of serviceTrips) computedTrips.push({ ...service, trip });
+    }
+    return computedTrips;
+};
+
+app.get("/lines/:id", (req, res) => {
+    const gtfsRoute = gtfs.routes.find((r) => r.route_id === req.params.id);
+    if (!gtfsRoute) return res.status(404).json({ error: "Route not found" });
+
+    const gtfsTrips: { [key: string]: any } = {};
+    const gtfsStops: { [key: string]: any } = {};
+    const stopsIds = new Set<string>();
+    for (const trip of gtfs.trips) {
+        if (trip.route_id !== gtfsRoute.route_id) continue;
+        gtfsTrips[trip.trip_id] = { ...trip, stopTimes: [] };
+    }
+    for (const stopTime of gtfs.stopTimes) {
+        if (!gtfsTrips[stopTime.trip_id]) continue;
+        gtfsTrips[stopTime.trip_id].stopTimes.push(stopTime);
+        stopsIds.add(stopTime.stop_id);
+    }
+    for (const stop of gtfs.stops) {
+        if (!stopsIds.has(stop.stop_id)) continue;
+        gtfsStops[stop.stop_id] = stop;
+    }
+
+    const computedTrips = computeTrips(
+        gtfsRoute,
+        Date.now() - 2 * 24 * 60 * 60 * 1000,
+        Date.now() + 2 * 24 * 60 * 60 * 1000
+    );
+
+    const stops = Object.values(gtfsStops).map((s) => ({
+        id: s.stop_id,
+        name: s.stop_name,
+        zone: s.zone_id,
+        parent: s.parent_station,
+        lat: s.stop_lat,
+        lon: s.stop_lon
+    }));
+
+    const trips = computedTrips.map((trip) => ({
+        tripId: trip.trip.trip_id,
+        serviceId: trip.service.service_id,
+        headsign: trip.trip.trip_headsign,
+        direction: trip.trip.direction_id === "0" ? "outbound" : "inbound",
+        stops: gtfsTrips[trip.trip.trip_id].stopTimes.map((st: any) => ({
+            stopId: st.stop_id,
+            departureTime: toDateTime(trip.date, st.departure_time).getTime(),
+            arrivalTime: toDateTime(trip.date, st.arrival_time).getTime()
+        }))
+    }));
+    trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
+
+    const nextTripIndex = trips.findIndex((t) => t.stops[0]!.departureTime >= Date.now());
+
+    res.json({
+        id: gtfsRoute.route_id,
+        shortName: gtfsRoute.route_short_name,
+        longName: gtfsRoute.route_long_name,
+        color: gtfsRoute.route_color,
+        trips: trips.slice(Math.max(0, nextTripIndex - 10), nextTripIndex + 10),
+        stops
+    });
+});
 
 const server = http.createServer(app);
 
