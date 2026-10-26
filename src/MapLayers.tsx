@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { CircleMarker, GeoJSON, Popup, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CircleMarker, GeoJSON, useMap, useMapEvents } from "react-leaflet";
 
 const collectCoordinates = (coords: any, out: [number, number][]) => {
     if (typeof coords[0] === "number") out.push(coords);
@@ -64,25 +64,61 @@ export const LinesLayer = ({ features, visible }: { features: any[]; visible: bo
     );
 };
 
+const VehicleMarker = ({ vehicle, color }: { vehicle: any; color: string }) => {
+    const target: [number, number] = [
+        vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
+        vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
+    ];
+
+    const [position, setPosition] = useState<[number, number]>(target);
+    const fromRef = useRef<[number, number]>(target);
+    const targetRef = useRef<[number, number]>(target);
+    const startRef = useRef<number>(0);
+    const frameRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        const [targetLat, targetLon] = target;
+        const [currentLat, currentLon] = targetRef.current;
+        if (targetLat === currentLat && targetLon === currentLon) return;
+
+        fromRef.current = position;
+        targetRef.current = target;
+        startRef.current = performance.now();
+
+        const animate = (now: number) => {
+            const progress = Math.min((now - startRef.current) / 1000, 1);
+            const [fromLat, fromLon] = fromRef.current;
+            const [toLat, toLon] = targetRef.current;
+            setPosition([fromLat + (toLat - fromLat) * progress, fromLon + (toLon - fromLon) * progress]);
+            if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+            else frameRef.current = null;
+        };
+
+        if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+        frameRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+            frameRef.current = null;
+        };
+    }, [target[0], target[1]]);
+
+    return <CircleMarker center={position} radius={7} stroke={false} fillColor={color} fillOpacity={1}  />;
+};
+
 export const VehiclesLayer = ({ routes, vehicles }: { routes: any; vehicles: { [key: string]: any } }) => {
     return Object.values(vehicles).map((vehicle: any) => {
-        const route = routes.find(
+        const route = routes?.find(
             (r: any) =>
                 r.route_id ===
                 vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
         );
         if (!route) console.warn("Route not found for vehicle", vehicle.MonitoredVehicleJourney.VehicleRef.value);
         return (
-            <CircleMarker
+            <VehicleMarker
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
-                center={[
-                    vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
-                    vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
-                ]}
-                radius={6}
-                stroke={false}
-                fillColor={route?.route_color ? `#${route.route_color}` : "#aaaaaa"}
-                fillOpacity={1}
+                vehicle={vehicle}
+                color={route?.route_color ? `#${route.route_color}` : "#aaaaaa"}
             />
         );
     });
@@ -106,7 +142,7 @@ export const StopsLayer = ({ stops, setSelectedStop }: { stops: any[]; setSelect
         <CircleMarker
             key={stop.stop_id}
             center={[stop.stop_lat, stop.stop_lon]}
-            radius={6}
+            radius={5}
             color="white"
             eventHandlers={{ click: () => setSelectedStop(stop) }}
         />
