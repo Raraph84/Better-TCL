@@ -24,7 +24,13 @@ let linesGeojson = fs.existsSync("lines.geojson")
     : { type: "FeatureCollection", features: [] };
 
 const updateLines = async () => {
-    const collections = await Promise.all(LINES_URLS.map((url) => fetch(url).then((res) => res.json())));
+    let collections;
+    try {
+        collections = await Promise.all(LINES_URLS.map((url) => fetch(url).then((res) => res.json())));
+    } catch (error) {
+        console.error("Failed to fetch lines geojson:", error);
+        return;
+    }
     linesGeojson.features = collections.flatMap((collection: any) => collection.features);
     await fs.promises.writeFile("lines.geojson", JSON.stringify(linesGeojson));
     console.log("Lines data updated successfully");
@@ -38,11 +44,17 @@ let gtfs = fs.existsSync("gtfs.zip")
     : { calendar: [], calendarDates: [], routes: [], stopTimes: [], stops: [], trips: [] };
 
 const updateGtfs = async () => {
-    const req = await fetch("https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP", {
-        headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
-    });
-    if (!req.ok) throw new Error("Failed to fetch data from Grand Lyon API");
-    const data = Buffer.from(await req.arrayBuffer());
+    let res;
+    try {
+        res = await fetch("https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP", {
+            headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
+        });
+        if (!res.ok) throw new Error("Error from Grand Lyon API: " + res.status + " " + res.statusText);
+    } catch (error) {
+        console.error("Failed to fetch GTFS data:", error);
+        return;
+    }
+    const data = Buffer.from(await res.arrayBuffer());
     await fs.promises.writeFile("gtfs.zip", data);
     gtfs = await parseGtfs(data);
     console.log("GTFS data updated successfully");
@@ -122,7 +134,7 @@ app.get("/lines/:id", (req, res) => {
     const computedTrips = computeTrips(
         gtfsRoute,
         Date.now() - 2 * 24 * 60 * 60 * 1000,
-        Date.now() + 2 * 24 * 60 * 60 * 1000
+        Date.now() + 24 * 60 * 60 * 1000
     );
 
     const stops = Object.values(gtfsStops).map((s) => ({
@@ -135,6 +147,7 @@ app.get("/lines/:id", (req, res) => {
     }));
 
     const trips = computedTrips.map((trip) => ({
+        tripDate: trip.date.getTime(),
         tripId: trip.trip.trip_id,
         serviceId: trip.service.service_id,
         headsign: trip.trip.trip_headsign,
@@ -178,10 +191,13 @@ server.on("upgrade", (req, socket, head) => {
 
 let trackedVehicles: { [key: string]: any } = {};
 setInterval(async () => {
-    const res = await fetch("https://data.grandlyon.com/siri-lite/2.0/vehicle-monitoring.json", {
-        headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
-    });
-    if (!res.ok) {
+    let res;
+    try {
+        res = await fetch("https://data.grandlyon.com/siri-lite/2.0/vehicle-monitoring.json", {
+            headers: { Authorization: "Basic " + btoa(process.env.DATA_GRANDLYON_BASIC_AUTH!) }
+        });
+        if (!res.ok) throw new Error("Error from Grand Lyon API: " + res.status + " " + res.statusText);
+    } catch (error) {
         console.error("Failed to fetch vehicle monitoring data");
         return;
     }
