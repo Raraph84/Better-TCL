@@ -81,14 +81,21 @@ export const TripPanel = ({
     setPanel: (panel: { type: any; data: any } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
+    const [fullTrip, setFullTrip] = useState<any>(null);
+
     useEffect(() => {
         if (!trip) return;
+        setFullTrip(trip);
         setForcedLines([trip.line.id]);
         return () => setForcedLines(null);
     }, [trip]);
 
     return (
-        <Panel title={"Service - Ligne " + trip?.line?.shortName} open={trip} onClose={() => setPanel(null)}>
+        <Panel
+            title={"Service - Ligne " + (trip?.line?.shortName ?? fullTrip?.line.shortName)}
+            open={trip}
+            onClose={() => setPanel(null)}
+        >
             <button onClick={() => setPanel({ type: "line", data: trip?.line })}>Voir la ligne</button>
         </Panel>
     );

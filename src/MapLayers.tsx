@@ -31,7 +31,7 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
     ];
 };
 
-export const LinesLayer = ({ features, visible }: { features: any[]; visible: boolean }) => {
+export const LinesLayer = ({ features, visible = true }: { features: any[]; visible?: boolean }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
     const [version, setVersion] = useState(0);
