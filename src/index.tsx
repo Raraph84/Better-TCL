@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
+import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
 import { Panel } from "./Panel.js";
 
 import "leaflet/dist/leaflet.css";
@@ -12,7 +13,6 @@ const App = () => {
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
     const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; data: any } | null>(null);
-    const [panelData, setPanelData] = useState<any>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
         met: boolean;
@@ -36,17 +36,6 @@ const App = () => {
             .then((res) => res.json())
             .then((lines) => setLinesGeojson(lines.features));
     }, []);
-
-    useEffect(() => {
-        if (panel?.type === "line")
-            fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + panel.data.id)
-                .then((res) => res.json())
-                .then((res) => setPanelData(res));
-        else if (panel?.type === "stop")
-            fetch(import.meta.env.VITE_SERVER_HOST + "/stops/" + panel.data.id)
-                .then((res) => res.json())
-                .then((res) => setPanelData(res));
-    }, [panel]);
 
     useEffect(() => {
         const connect = () => {
@@ -118,35 +107,9 @@ const App = () => {
                 <VehiclesLayer lines={lines} vehicles={trackedVehicles} setPanel={setPanel} />
             </MapContainer>
 
-            <Panel
-                title={"Ligne " + panel?.data?.shortName}
-                open={panel?.type === "line"}
-                onClose={() => setPanel(null)}
-            >
-                <div className="stops">
-                    {panelData?.stops?.map((stop: any) => (
-                        <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", data: stop })}>
-                            {stop.name}
-                        </button>
-                    ))}
-                </div>
-            </Panel>
-            <Panel title={"Arrêt " + panel?.data?.name} open={panel?.type === "stop"} onClose={() => setPanel(null)}>
-                <div className="lines">
-                    {panelData?.lines?.map((line: any) => (
-                        <button key={line.id} className="line" onClick={() => setPanel({ type: "line", data: line })}>
-                            Ligne {line.shortName}
-                        </button>
-                    ))}
-                </div>
-            </Panel>
-            <Panel
-                title={"Service - Ligne " + panel?.data?.line?.shortName}
-                open={panel?.type === "trip"}
-                onClose={() => setPanel(null)}
-            >
-                <button onClick={() => setPanel({ type: "line", data: panel?.data.line })}>Voir la ligne</button>
-            </Panel>
+            <LinePanel line={panel?.type === "line" ? panel?.data : null} setPanel={setPanel} />
+            <StopPanel stop={panel?.type === "stop" ? panel?.data : null} setPanel={setPanel} />
+            <TripPanel trip={panel?.type === "trip" ? panel?.data : null} setPanel={setPanel} />
 
             <div className="right-buttons">
                 <button onClick={() => setPanel({ type: "filters", data: null })}>
