@@ -31,7 +31,17 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
     ];
 };
 
-export const LinesLayer = ({ features, visible = true }: { features: any[]; visible?: boolean }) => {
+export const LinesLayer = ({
+    features,
+    visible = true,
+    lines,
+    setPanel
+}: {
+    features: any[];
+    visible?: boolean;
+    lines: any;
+    setPanel: (panel: { type: any; data: any }) => void;
+}) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
     const [version, setVersion] = useState(0);
@@ -64,6 +74,13 @@ export const LinesLayer = ({ features, visible = true }: { features: any[]; visi
                 weight: 3,
                 opacity: 0.9
             })}
+            eventHandlers={{
+                click: (event) => {
+                    const feature = event.sourceTarget.feature;
+                    const line = lines.find((line: any) => line.id === feature.properties.code_ligne);
+                    setPanel({ type: "line", data: line });
+                }
+            }}
         />
     );
 };
@@ -125,19 +142,19 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
 
 export const VehiclesLayer = ({
     lines,
+    forcedLines,
     vehicles,
     setPanel
 }: {
     lines: any;
+    forcedLines: string[] | null;
     vehicles: { [key: string]: any };
     setPanel: (panel: any) => void;
 }) => {
     return vehicles.map((vehicle: any) => {
-        const line = lines.find(
-            (line: any) =>
-                line.id ===
-                vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "")
-        );
+        const lineId = vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "");
+        if (forcedLines && !forcedLines.includes(lineId)) return null;
+        const line = lines.find((line: any) => line.id === lineId);
         return (
             <VehicleMarker
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}

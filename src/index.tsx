@@ -65,50 +65,73 @@ const App = () => {
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "MET")}
                     visible={filters.met && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "FUN")}
                     visible={filters.fun && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne !== "RX"
                     )}
                     visible={filters.tra && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^TB\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.trambus && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => f.properties.famille_transport === "BAT")}
                     visible={filters.navi && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "TRA" && f.properties.ligne === "RX"
                     )}
                     visible={filters.rx && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && !/^(TB|JD)\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.bus && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter(
                         (f: any) => f.properties.famille_transport === "BUS" && /^JD\d+$/.test(f.properties.ligne)
                     )}
                     visible={filters.jd && !forcedLines}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <LinesLayer
                     features={linesGeojson?.filter((f: any) => forcedLines?.includes(f.properties.code_ligne))}
+                    lines={lines}
+                    setPanel={setPanel}
                 />
                 <StopsLayer stops={stops ?? []} setPanel={setPanel} />
-                <VehiclesLayer lines={lines ?? []} vehicles={Object.values(trackedVehicles)} setPanel={setPanel} />
+                <VehiclesLayer
+                    lines={lines ?? []}
+                    forcedLines={forcedLines}
+                    vehicles={Object.values(trackedVehicles)}
+                    setPanel={setPanel}
+                />
             </MapContainer>
 
             <LinePanel
