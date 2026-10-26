@@ -11,7 +11,8 @@ const App = () => {
     const [stops, setStops] = useState<any[]>([]);
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
-    const [panel, setPanel] = useState<{ type: "filters" | "stop" | "trip"; data: any } | null>(null);
+    const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; data: any } | null>(null);
+    const [panelData, setPanelData] = useState<any>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
         met: boolean;
@@ -35,6 +36,13 @@ const App = () => {
             .then((res) => res.json())
             .then((lines) => setLinesGeojson(lines.features));
     }, []);
+
+    useEffect(() => {
+        if (panel?.type === "line")
+            fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + panel.data.id)
+                .then((res) => res.json())
+                .then((res) => setPanelData(res));
+    }, [panel]);
 
     useEffect(() => {
         const connect = () => {
@@ -107,15 +115,30 @@ const App = () => {
             </MapContainer>
 
             <Panel
+                title={"Ligne " + panel?.data?.shortName}
+                open={panel?.type === "line"}
+                onClose={() => setPanel(null)}
+            >
+                <div className="stops">
+                    {panelData?.stops?.map((stop: any) => (
+                        <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", data: stop })}>
+                            {stop.name}
+                        </button>
+                    ))}
+                </div>
+            </Panel>
+            <Panel
                 title={"Arrêt " + panel?.data?.name}
                 open={panel?.type === "stop"}
                 onClose={() => setPanel(null)}
             ></Panel>
             <Panel
-                title={"Service - Ligne " + panel?.data?.route?.shortName}
+                title={"Service - Ligne " + panel?.data?.line?.shortName}
                 open={panel?.type === "trip"}
                 onClose={() => setPanel(null)}
-            ></Panel>
+            >
+                <button onClick={() => setPanel({ type: "line", data: panel?.data.line })}>Voir la ligne</button>
+            </Panel>
 
             <div className="right-buttons">
                 <button onClick={() => setPanel({ type: "filters", data: null })}>

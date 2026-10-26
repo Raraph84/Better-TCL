@@ -137,7 +137,7 @@ export const VehiclesLayer = ({
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
                 color={line?.color ? `#${line.color}` : "#aaaaaa"}
-                onClick={() => setPanel({ type: "trip", data: { vehicle, route: line } })}
+                onClick={() => setPanel({ type: "trip", data: { line, vehicle } })}
             />
         );
     });
