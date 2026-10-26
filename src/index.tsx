@@ -42,6 +42,10 @@ const App = () => {
             fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + panel.data.id)
                 .then((res) => res.json())
                 .then((res) => setPanelData(res));
+        else if (panel?.type === "stop")
+            fetch(import.meta.env.VITE_SERVER_HOST + "/stops/" + panel.data.id)
+                .then((res) => res.json())
+                .then((res) => setPanelData(res));
     }, [panel]);
 
     useEffect(() => {
@@ -127,11 +131,15 @@ const App = () => {
                     ))}
                 </div>
             </Panel>
-            <Panel
-                title={"Arrêt " + panel?.data?.name}
-                open={panel?.type === "stop"}
-                onClose={() => setPanel(null)}
-            ></Panel>
+            <Panel title={"Arrêt " + panel?.data?.name} open={panel?.type === "stop"} onClose={() => setPanel(null)}>
+                <div className="lines">
+                    {panelData?.lines?.map((line: any) => (
+                        <button key={line.id} className="line" onClick={() => setPanel({ type: "line", data: line })}>
+                            Ligne {line.shortName}
+                        </button>
+                    ))}
+                </div>
+            </Panel>
             <Panel
                 title={"Service - Ligne " + panel?.data?.line?.shortName}
                 open={panel?.type === "trip"}

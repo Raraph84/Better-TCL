@@ -189,6 +189,42 @@ app.get("/stops", (req, res) => {
     });
 });
 
+app.get("/stops/:id", (req, res) => {
+    const stop = gtfs.stops.find((s) => s.stop_id === req.params.id);
+    if (!stop) return res.status(404).json({ error: "Stop not found" });
+
+    const tripsIds = new Set<string>();
+    const routesIds = new Set<string>();
+    const lines = [];
+    for (const stopTime of gtfs.stopTimes) {
+        if (stopTime.stop_id !== stop.stop_id) continue;
+        tripsIds.add(stopTime.trip_id);
+    }
+    for (const trip of gtfs.trips) {
+        if (!tripsIds.has(trip.trip_id)) continue;
+        routesIds.add(trip.route_id);
+    }
+    for (const route of gtfs.routes) {
+        if (!routesIds.has(route.route_id)) continue;
+        lines.push({
+            id: route.route_id,
+            shortName: route.route_short_name,
+            longName: route.route_long_name,
+            color: route.route_color
+        });
+    }
+
+    res.json({
+        id: stop.stop_id,
+        name: stop.stop_name,
+        zone: stop.zone_id,
+        parent: stop.parent_station,
+        lat: stop.stop_lat,
+        lon: stop.stop_lon,
+        lines
+    });
+});
+
 const server = http.createServer(app);
 
 const trackingWss = new WebSocketServer({ noServer: true });
