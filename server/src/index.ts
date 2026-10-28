@@ -39,9 +39,7 @@ const updateLines = async () => {
 updateLines();
 setInterval(updateLines, 60 * 60 * 1000);
 
-let gtfs = fs.existsSync("gtfs.zip")
-    ? await parseGtfs(await fs.promises.readFile("gtfs.zip"))
-    : { calendar: [], calendarDates: [], routes: [], stopTimes: [], stops: [], trips: [] };
+let gtfs = fs.existsSync("gtfs.zip") ? await parseGtfs(await fs.promises.readFile("gtfs.zip")) : null;
 
 const updateGtfs = async () => {
     let res;
@@ -67,8 +65,8 @@ app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
 const computeServices = (trips: any[], startDate: number, endDate: number) => {
     const serviceIds = new Set(trips.map((trip) => trip.service_id));
-    const services = gtfs.calendar.filter((calendar) => serviceIds.has(calendar.service_id));
-    const servicesDates = gtfs.calendarDates.filter((calendarDate) => serviceIds.has(calendarDate.service_id));
+    const services = gtfs!.services.filter((calendar) => serviceIds.has(calendar.service_id));
+    const servicesDates = gtfs!.serviceExceptions.filter((calendarDate) => serviceIds.has(calendarDate.service_id));
 
     const computedServices = [];
     for (const service of services) {
@@ -92,7 +90,7 @@ const computeServices = (trips: any[], startDate: number, endDate: number) => {
 };
 
 const computeTrips = (route: any, startDate: number, endDate: number) => {
-    const trips = gtfs.trips.filter((trip) => trip.route_id === route.route_id);
+    const trips = gtfs!.trips.filter((trip) => trip.route_id === route.route_id);
     const services = computeServices(trips, startDate, endDate);
 
     const computedTrips = [];
@@ -105,7 +103,7 @@ const computeTrips = (route: any, startDate: number, endDate: number) => {
 
 app.get("/lines", (req, res) => {
     res.json({
-        lines: gtfs.routes.map((route) => ({
+        lines: gtfs!.lines.map((route) => ({
             id: route.route_id,
             shortName: route.route_short_name,
             longName: route.route_long_name,
@@ -115,22 +113,22 @@ app.get("/lines", (req, res) => {
 });
 
 app.get("/lines/:id", (req, res) => {
-    const gtfsRoute = gtfs.routes.find((r) => r.route_id === req.params.id);
+    const gtfsRoute = gtfs!.lines.find((r) => r.route_id === req.params.id);
     if (!gtfsRoute) return res.status(404).json({ error: "Line not found" });
 
     const gtfsTrips: { [key: string]: any } = {};
     const gtfsStops: { [key: string]: any } = {};
     const stopsIds = new Set<string>();
-    for (const trip of gtfs.trips) {
+    for (const trip of gtfs!.trips) {
         if (trip.route_id !== gtfsRoute.route_id) continue;
         gtfsTrips[trip.trip_id] = { ...trip, stopTimes: [] };
     }
-    for (const stopTime of gtfs.stopTimes) {
+    for (const stopTime of gtfs!.stopTimes) {
         if (!gtfsTrips[stopTime.trip_id]) continue;
         gtfsTrips[stopTime.trip_id].stopTimes.push(stopTime);
         stopsIds.add(stopTime.stop_id);
     }
-    for (const stop of gtfs.stops) {
+    for (const stop of gtfs!.stops) {
         if (!stopsIds.has(stop.stop_id)) continue;
         gtfsStops[stop.stop_id] = stop;
     }
@@ -191,7 +189,7 @@ app.get("/lines/:id", (req, res) => {
 
 app.get("/stops", (req, res) => {
     res.json({
-        stops: gtfs.stops.map((stop) => ({
+        stops: gtfs!.stops.map((stop) => ({
             id: stop.stop_id,
             name: stop.stop_name,
             zone: stop.zone_id,
@@ -203,23 +201,23 @@ app.get("/stops", (req, res) => {
 });
 
 app.get("/stops/:id", (req, res) => {
-    const stop = gtfs.stops.find((s) => s.stop_id === req.params.id);
+    const stop = gtfs!.stops.find((s) => s.stop_id === req.params.id);
     if (!stop) return res.status(404).json({ error: "Stop not found" });
 
-    const stopId = stop.parent_station ? stop.parent_station : stop.stop_id;
-    const stopsIds = new Set<string>(gtfs.stops.filter((s) => s.parent_station === stopId).map((s) => s.stop_id));
+    const stopId = stop.parent_station ?? stop.stop_id;
+    const stopsIds = new Set<string>(gtfs!.stops.filter((s) => s.parent_station === stopId).map((s) => s.stop_id));
     const tripsIds = new Set<string>();
     const routesIds = new Set<string>();
     const lines = [];
-    for (const stopTime of gtfs.stopTimes) {
+    for (const stopTime of gtfs!.stopTimes) {
         if (!stopsIds.has(stopTime.stop_id)) continue;
         tripsIds.add(stopTime.trip_id);
     }
-    for (const trip of gtfs.trips) {
+    for (const trip of gtfs!.trips) {
         if (!tripsIds.has(trip.trip_id)) continue;
         routesIds.add(trip.route_id);
     }
-    for (const route of gtfs.routes) {
+    for (const route of gtfs!.lines) {
         if (!routesIds.has(route.route_id)) continue;
         lines.push({
             id: route.route_id,

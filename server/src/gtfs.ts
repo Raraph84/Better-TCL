@@ -1,7 +1,7 @@
 import unzipper from "unzipper";
 
-const parse = async (file: unzipper.File) =>
-    (await file.buffer())
+const parse = async (zip: unzipper.CentralDirectory, filename: string) =>
+    (await zip.files.find((file) => file.path === filename)!.buffer())
         .toString()
         .split(/\r\n|\n\r|\n|\r/)
         .slice(1)
@@ -22,7 +22,7 @@ export const toDateTime = (date: Date, t: string): Date =>
 export const parseGtfs = async (gtfs: Buffer) => {
     const zip = await unzipper.Open.buffer(gtfs);
 
-    const calendar = (await parse(zip.files.find((file) => file.path === "calendar.txt")!)).map((c) => ({
+    const services = (await parse(zip, "calendar.txt")).map((c) => ({
         service_id: c[0]!,
         monday: c[1]! === "1",
         tuesday: c[2]! === "1",
@@ -34,12 +34,12 @@ export const parseGtfs = async (gtfs: Buffer) => {
         start_date: toDate(c[8]!),
         end_date: toDate(c[9]!)
     }));
-    const calendarDates = (await parse(zip.files.find((file) => file.path === "calendar_dates.txt")!)).map((c) => ({
+    const serviceExceptions = (await parse(zip, "calendar_dates.txt")).map((c) => ({
         service_id: c[0]!,
         date: toDate(c[1]!),
         exception_type: c[2]!
     }));
-    const routes = (await parse(zip.files.find((file) => file.path === "routes.txt")!)).map((r) => ({
+    const lines = (await parse(zip, "routes.txt")).map((r) => ({
         route_id: r[0]!,
         agency_id: r[1]!,
         route_short_name: r[2]!,
@@ -50,7 +50,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
         route_color: r[7]!,
         route_text_color: r[8]!
     }));
-    const trips = (await parse(zip.files.find((file) => file.path === "trips.txt")!)).map((t) => ({
+    const trips = (await parse(zip, "trips.txt")).map((t) => ({
         route_id: t[0]!,
         service_id: t[1]!,
         trip_id: t[2]!,
@@ -61,7 +61,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
         wheelchair_accessible: t[7]!,
         bikes_allowed: t[8]! === "1"
     }));
-    const stopTimes = (await parse(zip.files.find((file) => file.path === "stop_times.txt")!)).map((s) => ({
+    const stopTimes = (await parse(zip, "stop_times.txt")).map((s) => ({
         trip_id: s[0]!,
         arrival_time: s[1]!,
         departure_time: s[2]!,
@@ -70,7 +70,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
         pickup_type: s[5]!,
         drop_off_type: s[6]!
     }));
-    const stops = (await parse(zip.files.find((file) => file.path === "stops.txt")!)).map((s) => ({
+    const stops = (await parse(zip, "stops.txt")).map((s) => ({
         stop_id: s[0]!,
         stop_code: s[1]!,
         stop_name: s[2]!,
@@ -85,5 +85,5 @@ export const parseGtfs = async (gtfs: Buffer) => {
         stop_lon: Number(s[11])
     }));
 
-    return { calendar, calendarDates, routes, stopTimes, stops, trips };
+    return { services, serviceExceptions, lines, stopTimes, stops, trips };
 };
