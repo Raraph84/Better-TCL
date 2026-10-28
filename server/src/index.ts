@@ -65,8 +65,8 @@ app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
 const computeServices = (trips: any[], startDate: number, endDate: number) => {
     const serviceIds = new Set(trips.map((trip) => trip.serviceId));
-    const services = gtfs!.services.filter((calendar) => serviceIds.has(calendar.id));
-    const servicesDates = gtfs!.serviceExceptions.filter((calendarDate) => serviceIds.has(calendarDate.serviceId));
+    const services = gtfs!.services.filter((service) => serviceIds.has(service.id));
+    const serviceExceptions = gtfs!.serviceExceptions.filter((se) => serviceIds.has(se.serviceId));
 
     const computedServices = [];
     for (const service of services) {
@@ -79,18 +79,18 @@ const computeServices = (trips: any[], startDate: number, endDate: number) => {
             if (date.getDay() === 4 && !service.thursday) continue;
             if (date.getDay() === 5 && !service.friday) continue;
             if (date.getDay() === 6 && !service.saturday) continue;
-            const serviceDate = servicesDates.find(
-                (cd) => cd.serviceId === service.id && cd.date.getTime() === date.getTime()
+            const serviceException = serviceExceptions.find(
+                (se) => se.serviceId === service.id && se.date.getTime() === date.getTime()
             );
-            if (serviceDate?.exceptionType === "2") continue;
+            if (serviceException?.exceptionType === "2") continue;
             computedServices.push({ date: new Date(date), service });
         }
     }
     return computedServices;
 };
 
-const computeTrips = (route: any, startDate: number, endDate: number) => {
-    const trips = gtfs!.trips.filter((trip) => trip.lineId === route.id);
+const computeTrips = (line: any, startDate: number, endDate: number) => {
+    const trips = gtfs!.trips.filter((trip) => trip.lineId === line.id);
     const services = computeServices(trips, startDate, endDate);
 
     const computedTrips = [];
@@ -103,24 +103,24 @@ const computeTrips = (route: any, startDate: number, endDate: number) => {
 
 app.get("/lines", (req, res) => {
     res.json({
-        lines: gtfs!.lines.map((route) => ({
-            id: route.id,
-            shortName: route.shortName,
-            longName: route.longName,
-            color: route.color
+        lines: gtfs!.lines.map((line) => ({
+            id: line.id,
+            shortName: line.shortName,
+            longName: line.longName,
+            color: line.color
         }))
     });
 });
 
 app.get("/lines/:id", (req, res) => {
-    const gtfsRoute = gtfs!.lines.find((r) => r.id === req.params.id);
-    if (!gtfsRoute) return res.status(404).json({ error: "Line not found" });
+    const gtfsLine = gtfs!.lines.find((line) => line.id === req.params.id);
+    if (!gtfsLine) return res.status(404).json({ error: "Line not found" });
 
     const gtfsTrips: { [key: string]: any } = {};
     const gtfsStops: { [key: string]: any } = {};
     const stopsIds = new Set<string>();
     for (const trip of gtfs!.trips) {
-        if (trip.lineId !== gtfsRoute.id) continue;
+        if (trip.lineId !== gtfsLine.id) continue;
         gtfsTrips[trip.id] = { ...trip, stopTimes: [] };
     }
     for (const stopTime of gtfs!.stopTimes) {
@@ -153,7 +153,7 @@ app.get("/lines/:id", (req, res) => {
     }
 
     const computedTrips = computeTrips(
-        gtfsRoute,
+        gtfsLine,
         Date.now() - 2 * 24 * 60 * 60 * 1000,
         Date.now() + 24 * 60 * 60 * 1000
     );
@@ -178,10 +178,10 @@ app.get("/lines/:id", (req, res) => {
     const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
 
     res.json({
-        id: gtfsRoute.id,
-        shortName: gtfsRoute.shortName,
-        longName: gtfsRoute.longName,
-        color: gtfsRoute.color,
+        id: gtfsLine.id,
+        shortName: gtfsLine.shortName,
+        longName: gtfsLine.longName,
+        color: gtfsLine.color,
         trips: trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10)),
         stops
     });
@@ -201,13 +201,13 @@ app.get("/stops", (req, res) => {
 });
 
 app.get("/stops/:id", (req, res) => {
-    const stop = gtfs!.stops.find((s) => s.id === req.params.id);
+    const stop = gtfs!.stops.find((stop) => stop.id === req.params.id);
     if (!stop) return res.status(404).json({ error: "Stop not found" });
 
     const stopId = stop.parentStation ?? stop.id;
-    const stopsIds = new Set<string>(gtfs!.stops.filter((s) => s.parentStation === stopId).map((s) => s.id));
+    const stopsIds = new Set<string>(gtfs!.stops.filter((stop) => stop.parentStation === stopId).map((s) => s.id));
     const tripsIds = new Set<string>();
-    const routesIds = new Set<string>();
+    const linesIds = new Set<string>();
     const lines = [];
     for (const stopTime of gtfs!.stopTimes) {
         if (!stopsIds.has(stopTime.stopId)) continue;
@@ -215,15 +215,15 @@ app.get("/stops/:id", (req, res) => {
     }
     for (const trip of gtfs!.trips) {
         if (!tripsIds.has(trip.id)) continue;
-        routesIds.add(trip.lineId);
+        linesIds.add(trip.lineId);
     }
-    for (const route of gtfs!.lines) {
-        if (!routesIds.has(route.id)) continue;
+    for (const line of gtfs!.lines) {
+        if (!linesIds.has(line.id)) continue;
         lines.push({
-            id: route.id,
-            shortName: route.shortName,
-            longName: route.longName,
-            color: route.color
+            id: line.id,
+            shortName: line.shortName,
+            longName: line.longName,
+            color: line.color
         });
     }
 
