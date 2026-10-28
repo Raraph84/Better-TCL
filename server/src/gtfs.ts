@@ -70,7 +70,8 @@ export const parseGtfs = async (gtfs: Buffer) => {
             direction: pickValue({ "0": "outbound", "1": "inbound" }, trip[5]!),
             shapeId: trip[6]!,
             wheelchairAccessible: trip[7]!,
-            bikesAllowed: trip[8]!
+            bikesAllowed: trip[8]!,
+            stopTimes: []
         };
     const stopTimes: StopTime[] = (await parse(zip, "stop_times.txt")).map((stopTime) => ({
         tripId: stopTime[0]!,
@@ -95,8 +96,14 @@ export const parseGtfs = async (gtfs: Buffer) => {
             timezone: stop[8]!,
             wheelchairBoarding: stop[9]!,
             latitude: Number(stop[10]),
-            longitude: Number(stop[11])
+            longitude: Number(stop[11]),
+            stopTimes: []
         };
+
+    for (const stopTime of stopTimes) {
+        trips[stopTime.tripId]!.stopTimes.push(stopTime);
+        stops[stopTime.stopId]!.stopTimes.push(stopTime);
+    }
 
     return { services, serviceExceptions, lines, stopTimes, stops, trips };
 };
@@ -142,6 +149,7 @@ export type Trip = {
     shapeId: string;
     wheelchairAccessible: string;
     bikesAllowed: string;
+    stopTimes: StopTime[];
 };
 
 export type StopTime = {
@@ -167,4 +175,5 @@ export type Stop = {
     wheelchairBoarding: string;
     latitude: number;
     longitude: number;
+    stopTimes: StopTime[];
 };
