@@ -135,20 +135,30 @@ app.get("/lines/:id", (req, res) => {
         gtfsStops[stop.stop_id] = stop;
     }
 
+    const stops = [];
+    stopsIds.clear();
+    for (const trip of Object.values(gtfsTrips)) {
+        for (const stopTime of trip.stopTimes) {
+            if (stopsIds.has(trip.direction_id + "-" + stopTime.stop_id)) continue;
+            stopsIds.add(trip.direction_id + "-" + stopTime.stop_id);
+            const stop = gtfsStops[stopTime.stop_id];
+            stops.push({
+                id: stop.stop_id,
+                name: stop.stop_name,
+                zone: stop.zone_id,
+                parent: stop.parent_station,
+                lat: stop.stop_lat,
+                lon: stop.stop_lon,
+                direction: trip.direction_id === "0" ? "outbound" : "inbound"
+            });
+        }
+    }
+
     const computedTrips = computeTrips(
         gtfsRoute,
         Date.now() - 2 * 24 * 60 * 60 * 1000,
         Date.now() + 24 * 60 * 60 * 1000
     );
-
-    const stops = Object.values(gtfsStops).map((s) => ({
-        id: s.stop_id,
-        name: s.stop_name,
-        zone: s.zone_id,
-        parent: s.parent_station,
-        lat: s.stop_lat,
-        lon: s.stop_lon
-    }));
 
     const trips = computedTrips.map((trip) => ({
         tripDate: trip.date.getTime(),
