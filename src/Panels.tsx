@@ -11,6 +11,7 @@ export const LinePanel = ({
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const [fullLine, setFullLine] = useState<any>(null);
+    const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
 
     useEffect(() => {
         if (!line) return;
@@ -22,10 +23,23 @@ export const LinePanel = ({
         return () => setForcedLines(null);
     }, [line]);
 
+    const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
+
     return (
         <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => setPanel(null)}>
+            <button
+                className="direction"
+                onClick={() => setDirection(direction === "outbound" ? "inbound" : "outbound")}
+            >
+                <span>
+                    Direction
+                    <br />
+                    {stops?.[stops.length - 1].name}
+                </span>
+                <i className="fa-solid fa-repeat" />
+            </button>
             <div className="stops">
-                {fullLine?.stops.map((stop: any) => (
+                {stops?.map((stop: any) => (
                     <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", data: stop })}>
                         {stop.name}
                     </button>

@@ -126,3 +126,18 @@ body {
         background-color: rgba(255, 255, 255, 0.2);
     }
 }
+
+button.direction {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+
+    span {
+        flex: 1;
+    }
+
+    i {
+        font-size: 20px;
+    }
+}
