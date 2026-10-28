@@ -90,12 +90,11 @@ const computeServices = (trips: Trip[], startDate: number, endDate: number) => {
 };
 
 const computeTrips = (line: Line, startDate: number, endDate: number) => {
-    const trips = Object.values(gtfs!.trips).filter((trip) => trip.lineId === line.id);
-    const services = computeServices(trips, startDate, endDate);
+    const services = computeServices(line.trips, startDate, endDate);
 
     const computedTrips = [];
     for (const service of services) {
-        const serviceTrips = trips.filter((trip) => trip.serviceId === service.service.id);
+        const serviceTrips = line.trips.filter((trip) => trip.serviceId === service.service.id);
         for (const trip of serviceTrips) computedTrips.push({ ...service, trip });
     }
     return computedTrips;
@@ -116,11 +115,9 @@ app.get("/lines/:id", (req, res) => {
     const gtfsLine = gtfs!.lines[req.params.id];
     if (!gtfsLine) return res.status(404).json({ error: "Line not found" });
 
-    const gtfsTrips = Object.values(gtfs!.trips).filter((trip) => trip.lineId === gtfsLine.id);
-
     const stops = [];
     const stopsIds = new Set<string>();
-    for (const trip of gtfsTrips) {
+    for (const trip of gtfsLine.trips) {
         for (const stopTime of trip.stopTimes) {
             if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
             stopsIds.add(trip.direction + "-" + stopTime.stopId);

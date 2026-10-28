@@ -57,7 +57,8 @@ export const parseGtfs = async (gtfs: Buffer) => {
             type: line[5]!,
             url: line[6]!,
             color: line[7]!,
-            textColor: line[8]!
+            textColor: line[8]!,
+            trips: []
         };
     const trips: { [key: string]: Trip } = {};
     for (const trip of await parse(zip, "trips.txt"))
@@ -104,6 +105,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
         trips[stopTime.tripId]!.stopTimes.push(stopTime);
         stops[stopTime.stopId]!.stopTimes.push(stopTime);
     }
+    for (const trip of Object.values(trips)) lines[trip.lineId]!.trips.push(trip);
 
     return { services, serviceExceptions, lines, stopTimes, stops, trips };
 };
@@ -137,6 +139,7 @@ export type Line = {
     url: string;
     color: string;
     textColor: string;
+    trips: Trip[];
 };
 
 export type Trip = {
