@@ -116,7 +116,7 @@ app.get("/lines", (req, res) => {
 
 app.get("/lines/:id", (req, res) => {
     const gtfsRoute = gtfs.routes.find((r) => r.route_id === req.params.id);
-    if (!gtfsRoute) return res.status(404).json({ error: "Route not found" });
+    if (!gtfsRoute) return res.status(404).json({ error: "Line not found" });
 
     const gtfsTrips: { [key: string]: any } = {};
     const gtfsStops: { [key: string]: any } = {};
@@ -174,14 +174,17 @@ app.get("/lines/:id", (req, res) => {
     }));
     trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
 
-    const nextTripIndex = trips.findIndex((t) => t.stops[0]!.departureTime >= Date.now());
+    const firstCurrent = trips.findIndex(
+        (trip) => trip.stops[trip.stops.length - 1]!.departureTime >= Date.now() - 15 * 60 * 1000
+    );
+    const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
 
     res.json({
         id: gtfsRoute.route_id,
         shortName: gtfsRoute.route_short_name,
         longName: gtfsRoute.route_long_name,
         color: gtfsRoute.route_color,
-        trips: trips.slice(Math.max(0, nextTripIndex - 10), nextTripIndex + 10),
+        trips: trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10)),
         stops
     });
 });
