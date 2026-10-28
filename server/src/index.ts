@@ -64,13 +64,13 @@ setInterval(updateGtfs, 60 * 60 * 1000);
 app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
 const computeServices = (trips: any[], startDate: number, endDate: number) => {
-    const serviceIds = new Set(trips.map((trip) => trip.service_id));
-    const services = gtfs!.services.filter((calendar) => serviceIds.has(calendar.service_id));
-    const servicesDates = gtfs!.serviceExceptions.filter((calendarDate) => serviceIds.has(calendarDate.service_id));
+    const serviceIds = new Set(trips.map((trip) => trip.serviceId));
+    const services = gtfs!.services.filter((calendar) => serviceIds.has(calendar.id));
+    const servicesDates = gtfs!.serviceExceptions.filter((calendarDate) => serviceIds.has(calendarDate.serviceId));
 
     const computedServices = [];
     for (const service of services) {
-        for (let date = new Date(service.start_date); date <= service.end_date; date.setDate(date.getDate() + 1)) {
+        for (let date = new Date(service.startDate); date <= service.endDate; date.setDate(date.getDate() + 1)) {
             if (date.getTime() < startDate || date.getTime() >= endDate) continue;
             if (date.getDay() === 0 && !service.sunday) continue;
             if (date.getDay() === 1 && !service.monday) continue;
@@ -80,9 +80,9 @@ const computeServices = (trips: any[], startDate: number, endDate: number) => {
             if (date.getDay() === 5 && !service.friday) continue;
             if (date.getDay() === 6 && !service.saturday) continue;
             const serviceDate = servicesDates.find(
-                (cd) => cd.service_id === service.service_id && cd.date.getTime() === date.getTime()
+                (cd) => cd.serviceId === service.id && cd.date.getTime() === date.getTime()
             );
-            if (serviceDate?.exception_type === "2") continue;
+            if (serviceDate?.exceptionType === "2") continue;
             computedServices.push({ date: new Date(date), service });
         }
     }
@@ -90,12 +90,12 @@ const computeServices = (trips: any[], startDate: number, endDate: number) => {
 };
 
 const computeTrips = (route: any, startDate: number, endDate: number) => {
-    const trips = gtfs!.trips.filter((trip) => trip.route_id === route.route_id);
+    const trips = gtfs!.trips.filter((trip) => trip.lineId === route.id);
     const services = computeServices(trips, startDate, endDate);
 
     const computedTrips = [];
     for (const service of services) {
-        const serviceTrips = trips.filter((trip) => trip.service_id === service.service.service_id);
+        const serviceTrips = trips.filter((trip) => trip.serviceId === service.service.id);
         for (const trip of serviceTrips) computedTrips.push({ ...service, trip });
     }
     return computedTrips;
@@ -104,50 +104,50 @@ const computeTrips = (route: any, startDate: number, endDate: number) => {
 app.get("/lines", (req, res) => {
     res.json({
         lines: gtfs!.lines.map((route) => ({
-            id: route.route_id,
-            shortName: route.route_short_name,
-            longName: route.route_long_name,
-            color: route.route_color
+            id: route.id,
+            shortName: route.shortName,
+            longName: route.longName,
+            color: route.color
         }))
     });
 });
 
 app.get("/lines/:id", (req, res) => {
-    const gtfsRoute = gtfs!.lines.find((r) => r.route_id === req.params.id);
+    const gtfsRoute = gtfs!.lines.find((r) => r.id === req.params.id);
     if (!gtfsRoute) return res.status(404).json({ error: "Line not found" });
 
     const gtfsTrips: { [key: string]: any } = {};
     const gtfsStops: { [key: string]: any } = {};
     const stopsIds = new Set<string>();
     for (const trip of gtfs!.trips) {
-        if (trip.route_id !== gtfsRoute.route_id) continue;
-        gtfsTrips[trip.trip_id] = { ...trip, stopTimes: [] };
+        if (trip.lineId !== gtfsRoute.id) continue;
+        gtfsTrips[trip.id] = { ...trip, stopTimes: [] };
     }
     for (const stopTime of gtfs!.stopTimes) {
-        if (!gtfsTrips[stopTime.trip_id]) continue;
-        gtfsTrips[stopTime.trip_id].stopTimes.push(stopTime);
-        stopsIds.add(stopTime.stop_id);
+        if (!gtfsTrips[stopTime.tripId]) continue;
+        gtfsTrips[stopTime.tripId].stopTimes.push(stopTime);
+        stopsIds.add(stopTime.stopId);
     }
     for (const stop of gtfs!.stops) {
-        if (!stopsIds.has(stop.stop_id)) continue;
-        gtfsStops[stop.stop_id] = stop;
+        if (!stopsIds.has(stop.id)) continue;
+        gtfsStops[stop.id] = stop;
     }
 
     const stops = [];
     stopsIds.clear();
     for (const trip of Object.values(gtfsTrips)) {
         for (const stopTime of trip.stopTimes) {
-            if (stopsIds.has(trip.direction_id + "-" + stopTime.stop_id)) continue;
-            stopsIds.add(trip.direction_id + "-" + stopTime.stop_id);
-            const stop = gtfsStops[stopTime.stop_id];
+            if (stopsIds.has(trip.directionId + "-" + stopTime.stopId)) continue;
+            stopsIds.add(trip.directionId + "-" + stopTime.stopId);
+            const stop = gtfsStops[stopTime.stopId];
             stops.push({
-                id: stop.stop_id,
-                name: stop.stop_name,
-                zone: stop.zone_id,
-                parent: stop.parent_station,
-                lat: stop.stop_lat,
-                lon: stop.stop_lon,
-                direction: trip.direction_id === "0" ? "outbound" : "inbound"
+                id: stop.id,
+                name: stop.name,
+                zone: stop.zoneId,
+                parent: stop.parentStation,
+                lat: stop.latitude,
+                lon: stop.longitude,
+                direction: trip.directionId === "0" ? "outbound" : "inbound"
             });
         }
     }
@@ -160,14 +160,14 @@ app.get("/lines/:id", (req, res) => {
 
     const trips = computedTrips.map((trip) => ({
         tripDate: trip.date.getTime(),
-        tripId: trip.trip.trip_id,
-        serviceId: trip.service.service_id,
-        headsign: trip.trip.trip_headsign,
-        direction: trip.trip.direction_id === "0" ? "outbound" : "inbound",
-        stops: gtfsTrips[trip.trip.trip_id].stopTimes.map((st: any) => ({
-            stopId: st.stop_id,
-            departureTime: toDateTime(trip.date, st.departure_time).getTime(),
-            arrivalTime: toDateTime(trip.date, st.arrival_time).getTime()
+        tripId: trip.trip.id,
+        serviceId: trip.service.id,
+        headsign: trip.trip.headsign,
+        direction: trip.trip.directionId === "0" ? "outbound" : "inbound",
+        stops: gtfsTrips[trip.trip.id].stopTimes.map((st: any) => ({
+            stopId: st.stopId,
+            departureTime: toDateTime(trip.date, st.departureTime).getTime(),
+            arrivalTime: toDateTime(trip.date, st.arrivalTime).getTime()
         }))
     }));
     trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
@@ -178,10 +178,10 @@ app.get("/lines/:id", (req, res) => {
     const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
 
     res.json({
-        id: gtfsRoute.route_id,
-        shortName: gtfsRoute.route_short_name,
-        longName: gtfsRoute.route_long_name,
-        color: gtfsRoute.route_color,
+        id: gtfsRoute.id,
+        shortName: gtfsRoute.shortName,
+        longName: gtfsRoute.longName,
+        color: gtfsRoute.color,
         trips: trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10)),
         stops
     });
@@ -190,52 +190,52 @@ app.get("/lines/:id", (req, res) => {
 app.get("/stops", (req, res) => {
     res.json({
         stops: gtfs!.stops.map((stop) => ({
-            id: stop.stop_id,
-            name: stop.stop_name,
-            zone: stop.zone_id,
-            parent: stop.parent_station,
-            lat: stop.stop_lat,
-            lon: stop.stop_lon
+            id: stop.id,
+            name: stop.name,
+            zone: stop.zoneId,
+            parent: stop.parentStation,
+            lat: stop.latitude,
+            lon: stop.longitude
         }))
     });
 });
 
 app.get("/stops/:id", (req, res) => {
-    const stop = gtfs!.stops.find((s) => s.stop_id === req.params.id);
+    const stop = gtfs!.stops.find((s) => s.id === req.params.id);
     if (!stop) return res.status(404).json({ error: "Stop not found" });
 
-    const stopId = stop.parent_station ?? stop.stop_id;
-    const stopsIds = new Set<string>(gtfs!.stops.filter((s) => s.parent_station === stopId).map((s) => s.stop_id));
+    const stopId = stop.parentStation ?? stop.id;
+    const stopsIds = new Set<string>(gtfs!.stops.filter((s) => s.parentStation === stopId).map((s) => s.id));
     const tripsIds = new Set<string>();
     const routesIds = new Set<string>();
     const lines = [];
     for (const stopTime of gtfs!.stopTimes) {
-        if (!stopsIds.has(stopTime.stop_id)) continue;
-        tripsIds.add(stopTime.trip_id);
+        if (!stopsIds.has(stopTime.stopId)) continue;
+        tripsIds.add(stopTime.tripId);
     }
     for (const trip of gtfs!.trips) {
-        if (!tripsIds.has(trip.trip_id)) continue;
-        routesIds.add(trip.route_id);
+        if (!tripsIds.has(trip.id)) continue;
+        routesIds.add(trip.lineId);
     }
     for (const route of gtfs!.lines) {
-        if (!routesIds.has(route.route_id)) continue;
+        if (!routesIds.has(route.id)) continue;
         lines.push({
-            id: route.route_id,
-            shortName: route.route_short_name,
-            longName: route.route_long_name,
-            color: route.route_color
+            id: route.id,
+            shortName: route.shortName,
+            longName: route.longName,
+            color: route.color
         });
     }
 
     lines.sort((a, b) => a.shortName.localeCompare(b.shortName, undefined, { numeric: true }));
 
     res.json({
-        id: stop.stop_id,
-        name: stop.stop_name,
-        zone: stop.zone_id,
-        parent: stop.parent_station,
-        lat: stop.stop_lat,
-        lon: stop.stop_lon,
+        id: stop.id,
+        name: stop.name,
+        zone: stop.zoneId,
+        parent: stop.parentStation,
+        lat: stop.latitude,
+        lon: stop.longitude,
         lines
     });
 });

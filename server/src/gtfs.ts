@@ -23,7 +23,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
     const zip = await unzipper.Open.buffer(gtfs);
 
     const services = (await parse(zip, "calendar.txt")).map((c) => ({
-        service_id: c[0]!,
+        id: c[0]!,
         monday: c[1]! === "1",
         tuesday: c[2]! === "1",
         wednesday: c[3]! === "1",
@@ -31,58 +31,58 @@ export const parseGtfs = async (gtfs: Buffer) => {
         friday: c[5]! === "1",
         saturday: c[6]! === "1",
         sunday: c[7]! === "1",
-        start_date: toDate(c[8]!),
-        end_date: toDate(c[9]!)
+        startDate: toDate(c[8]!),
+        endDate: toDate(c[9]!)
     }));
     const serviceExceptions = (await parse(zip, "calendar_dates.txt")).map((c) => ({
-        service_id: c[0]!,
+        serviceId: c[0]!,
         date: toDate(c[1]!),
-        exception_type: c[2]!
+        exceptionType: c[2]!
     }));
     const lines = (await parse(zip, "routes.txt")).map((r) => ({
-        route_id: r[0]!,
-        agency_id: r[1]!,
-        route_short_name: r[2]!,
-        route_long_name: r[3]!,
-        route_desc: r[4]!,
-        route_type: r[5]!,
-        route_url: r[6]!,
-        route_color: r[7]!,
-        route_text_color: r[8]!
+        id: r[0]!,
+        agencyId: r[1]!,
+        shortName: r[2]!,
+        longName: r[3]!,
+        description: r[4]!,
+        type: r[5]!,
+        url: r[6]!,
+        color: r[7]!,
+        textColor: r[8]!
     }));
     const trips = (await parse(zip, "trips.txt")).map((t) => ({
-        route_id: t[0]!,
-        service_id: t[1]!,
-        trip_id: t[2]!,
-        trip_headsign: t[3]!,
-        trip_short_name: t[4]!,
-        direction_id: t[5]!,
-        shape_id: t[6]!,
-        wheelchair_accessible: t[7]!,
-        bikes_allowed: t[8]! === "1"
+        lineId: t[0]!,
+        serviceId: t[1]!,
+        id: t[2]!,
+        headsign: t[3]!,
+        shortName: t[4]!,
+        directionId: t[5]!,
+        shapeId: t[6]!,
+        wheelchairAccessible: t[7]!,
+        bikesAllowed: t[8]! === "1"
     }));
     const stopTimes = (await parse(zip, "stop_times.txt")).map((s) => ({
-        trip_id: s[0]!,
-        arrival_time: s[1]!,
-        departure_time: s[2]!,
-        stop_id: s[3]!,
-        stop_sequence: s[4]!,
-        pickup_type: s[5]!,
-        drop_off_type: s[6]!
+        tripId: s[0]!,
+        arrivalTime: s[1]!,
+        departureTime: s[2]!,
+        stopId: s[3]!,
+        stopSequence: s[4]!,
+        pickupType: s[5]!,
+        dropOffType: s[6]!
     }));
     const stops = (await parse(zip, "stops.txt")).map((s) => ({
-        stop_id: s[0]!,
-        stop_code: s[1]!,
-        stop_name: s[2]!,
-        stop_desc: s[3]!,
-        zone_id: s[4]!,
-        stop_url: s[5]!,
-        location_type: s[6]!,
-        parent_station: s[7]!,
-        stop_timezone: s[8]!,
-        wheelchair_boarding: s[9]!,
-        stop_lat: Number(s[10]),
-        stop_lon: Number(s[11])
+        id: s[0]!,
+        code: s[1]!,
+        name: s[2]!,
+        description: s[3]!,
+        zoneId: s[4]!,
+        url: s[5]!,
+        locationType: s[6]!,
+        parentStation: s[7]!,
+        timezone: s[8]!,
+        wheelchairBoarding: s[9]!,
+        latitude: Number(s[10]),
+        longitude: Number(s[11])
     }));
 
     return { services, serviceExceptions, lines, stopTimes, stops, trips };
