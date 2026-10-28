@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
-import { parseGtfs, toDateTime } from "./gtfs.js";
+import { parseGtfs, toDateTime, type Line, type Stop, type StopTime, type Trip } from "./gtfs.js";
 
 dotenv.config({ quiet: true });
 
@@ -63,7 +63,7 @@ setInterval(updateGtfs, 60 * 60 * 1000);
 
 app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
-const computeServices = (trips: any[], startDate: number, endDate: number) => {
+const computeServices = (trips: Trip[], startDate: number, endDate: number) => {
     const serviceIds = new Set(trips.map((trip) => trip.serviceId));
     const services = gtfs!.services.filter((service) => serviceIds.has(service.id));
     const serviceExceptions = gtfs!.serviceExceptions.filter((se) => serviceIds.has(se.serviceId));
@@ -82,14 +82,14 @@ const computeServices = (trips: any[], startDate: number, endDate: number) => {
             const serviceException = serviceExceptions.find(
                 (se) => se.serviceId === service.id && se.date.getTime() === date.getTime()
             );
-            if (serviceException?.exceptionType === "2") continue;
+            if (serviceException?.exceptionType === "removed") continue;
             computedServices.push({ date: new Date(date), service });
         }
     }
     return computedServices;
 };
 
-const computeTrips = (line: any, startDate: number, endDate: number) => {
+const computeTrips = (line: Line, startDate: number, endDate: number) => {
     const trips = gtfs!.trips.filter((trip) => trip.lineId === line.id);
     const services = computeServices(trips, startDate, endDate);
 
@@ -116,8 +116,8 @@ app.get("/lines/:id", (req, res) => {
     const gtfsLine = gtfs!.lines.find((line) => line.id === req.params.id);
     if (!gtfsLine) return res.status(404).json({ error: "Line not found" });
 
-    const gtfsTrips: { [key: string]: any } = {};
-    const gtfsStops: { [key: string]: any } = {};
+    const gtfsTrips: { [key: string]: Trip & { stopTimes: StopTime[] } } = {};
+    const gtfsStops: { [key: string]: Stop } = {};
     const stopsIds = new Set<string>();
     for (const trip of gtfs!.trips) {
         if (trip.lineId !== gtfsLine.id) continue;
@@ -125,7 +125,7 @@ app.get("/lines/:id", (req, res) => {
     }
     for (const stopTime of gtfs!.stopTimes) {
         if (!gtfsTrips[stopTime.tripId]) continue;
-        gtfsTrips[stopTime.tripId].stopTimes.push(stopTime);
+        gtfsTrips[stopTime.tripId]!.stopTimes.push(stopTime);
         stopsIds.add(stopTime.stopId);
     }
     for (const stop of gtfs!.stops) {
@@ -137,9 +137,9 @@ app.get("/lines/:id", (req, res) => {
     stopsIds.clear();
     for (const trip of Object.values(gtfsTrips)) {
         for (const stopTime of trip.stopTimes) {
-            if (stopsIds.has(trip.directionId + "-" + stopTime.stopId)) continue;
-            stopsIds.add(trip.directionId + "-" + stopTime.stopId);
-            const stop = gtfsStops[stopTime.stopId];
+            if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
+            stopsIds.add(trip.direction + "-" + stopTime.stopId);
+            const stop = gtfsStops[stopTime.stopId]!;
             stops.push({
                 id: stop.id,
                 name: stop.name,
@@ -147,7 +147,7 @@ app.get("/lines/:id", (req, res) => {
                 parent: stop.parentStation,
                 lat: stop.latitude,
                 lon: stop.longitude,
-                direction: trip.directionId === "0" ? "outbound" : "inbound"
+                direction: trip.direction
             });
         }
     }
@@ -163,11 +163,11 @@ app.get("/lines/:id", (req, res) => {
         tripId: trip.trip.id,
         serviceId: trip.service.id,
         headsign: trip.trip.headsign,
-        direction: trip.trip.directionId === "0" ? "outbound" : "inbound",
-        stops: gtfsTrips[trip.trip.id].stopTimes.map((st: any) => ({
-            stopId: st.stopId,
-            departureTime: toDateTime(trip.date, st.departureTime).getTime(),
-            arrivalTime: toDateTime(trip.date, st.arrivalTime).getTime()
+        direction: trip.trip.direction,
+        stops: gtfsTrips[trip.trip.id]!.stopTimes.map((stopTime) => ({
+            stopId: stopTime.stopId,
+            departureTime: toDateTime(trip.date, stopTime.departureTime).getTime(),
+            arrivalTime: toDateTime(trip.date, stopTime.arrivalTime).getTime()
         }))
     }));
     trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
