@@ -164,17 +164,17 @@ export const VehiclesLayer = ({
 
 export const StopsLayer = ({ stops, setPanel }: { stops: any[]; setPanel: (panel: any) => void }) => {
     const map = useMap();
-    const [view, setView] = useState(() => map.getBounds());
+    const [view, setView] = useState(() => ({ bounds: map.getBounds(), zoom: map.getZoom() }));
 
     useMapEvents({
-        moveend: () => setView(map.getBounds()),
-        zoomend: () => setView(map.getBounds())
+        moveend: () => setView({ bounds: map.getBounds(), zoom: map.getZoom() }),
+        zoomend: () => setView({ bounds: map.getBounds(), zoom: map.getZoom() })
     });
 
-    let visibleStops = stops.filter((stop) => stop.parent && view.contains([stop.lat, stop.lon]));
-    if (visibleStops.length > 250)
-        visibleStops = stops.filter((stop) => !stop.parent && view.contains([stop.lat, stop.lon]));
-    if (visibleStops.length > 250) visibleStops = [];
+    const visibleStops = stops.filter(
+        (stop) => (view.zoom >= 17 ? stop.parent : !stop.parent) && view.bounds.contains([stop.lat, stop.lon])
+    );
+    if (visibleStops.length > 250) return null;
 
     return visibleStops.map((stop) => (
         <CircleMarker
