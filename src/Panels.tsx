@@ -91,7 +91,9 @@ export const StopPanel = ({
         return () => setForcedLines(null);
     }, [stop]);
 
-    const nextStops = fullStop?.nextStops.filter((stop: any) => showPreviousStops || stop.time >= Date.now());
+    const nextStops = fullStop?.nextStops.filter(
+        (stop: any) => showPreviousStops || stop.time >= Date.now() - 60 * 1000
+    );
 
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
