@@ -109,9 +109,17 @@ body {
     }
 }
 
-.panel .section-title {
-    font-size: 18px;
-    font-weight: 600;
+.panel {
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .section-subtitle {
+        font-weight: 600;
+        margin-top: 12px;
+        margin-bottom: 4px;
+    }
 }
 
 .lines,

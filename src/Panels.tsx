@@ -111,13 +111,19 @@ export const StopPanel = ({
                     const line = fullStop.lines.find((l: any) => l.id === nextStop.line);
                     const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
                     return (
-                        <button key={i}>
-                            <span>
-                                <div>Ligne {line.shortName}</div>
-                                <div>Vers {direction.name}</div>
-                            </span>
-                            <span>{time}</span>
-                        </button>
+                        <>
+                            {new Date(nextStop.time).getDate() !==
+                                new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
+                                <div className="section-subtitle">Demain</div>
+                            )}
+                            <button key={i}>
+                                <span>
+                                    <div>Ligne {line.shortName}</div>
+                                    <div>Vers {direction.name}</div>
+                                </span>
+                                <span>{time}</span>
+                            </button>
+                        </>
                     );
                 })}
             </div>
