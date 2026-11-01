@@ -101,14 +101,7 @@ const computeTrips = (line: Line, startDate: number, endDate: number) => {
 };
 
 app.get("/lines", (req, res) => {
-    res.json({
-        lines: Object.values(gtfs!.lines).map((line) => ({
-            id: line.id,
-            shortName: line.shortName,
-            longName: line.longName,
-            color: line.color
-        }))
-    });
+    res.json({ lines: Object.values(gtfs!.lines).map((line) => getLine(line, false, false)) });
 });
 
 const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
@@ -182,22 +175,13 @@ app.get("/lines/:id", (req, res) => {
 });
 
 app.get("/stops", (req, res) => {
-    res.json({
-        stops: Object.values(gtfs!.stops).map((stop) => ({
-            id: stop.id,
-            name: stop.name,
-            zone: stop.zoneId,
-            parent: stop.parentStation,
-            lat: stop.latitude,
-            lon: stop.longitude
-        }))
-    });
+    res.json({ stops: Object.values(gtfs!.stops).map((stop) => getStop(stop, false)) });
 });
 
-const getStop = (stop: Stop, withLines: boolean) => {
+const getStop = (stop: Stop, withLines: boolean): any => {
     let lines;
     if (withLines) {
-        const stops = Object.values(gtfs!.stops).filter((s) => s.parentStation === (stop.parentStation ?? stop.id));
+        const stops = [stop, ...Object.values(gtfs!.stops).filter((s) => s.parentStation === stop.id)];
 
         lines = [];
         const linesIds = new Set<string>();
@@ -228,7 +212,7 @@ const getStop = (stop: Stop, withLines: boolean) => {
         id: stop.id,
         name: stop.name,
         zone: stop.zoneId,
-        parent: stop.parentStation,
+        parent: stop.parentStation ? getStop(gtfs!.stops[stop.parentStation]!, false) : null,
         lat: stop.latitude,
         lon: stop.longitude,
         ...(withLines ? { lines } : {})
