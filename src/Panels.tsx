@@ -85,6 +85,18 @@ export const StopPanel = ({
                     </button>
                 ))}
             </div>
+            <div className="lines">
+                {fullStop?.nextStops.map((nextStop: any, i: number) => {
+                    const time = `${new Date(nextStop.time).getHours().toString().padStart(2, "0")}:${new Date(nextStop.time).getMinutes().toString().padStart(2, "0")}`;
+                    const line = fullStop.lines.find((l: any) => l.id === nextStop.line);
+                    const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
+                    return (
+                        <button key={i} className="left">
+                            {time} {line.shortName} vers {direction.name}
+                        </button>
+                    );
+                })}
+            </div>
         </Panel>
     );
 };

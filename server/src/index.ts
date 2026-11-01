@@ -174,12 +174,11 @@ app.get("/stops", (req, res) => {
     res.json({ stops: Object.values(gtfs!.stops).map((stop) => getStop(stop, false)) });
 });
 
-const getStop = (stop: Stop, withLines: boolean): any => {
-    let lines;
-    if (withLines) {
+const getStop = (stop: Stop, withLines: boolean, withNextStops: boolean = false): any => {
+    const lines = [];
+    const nextStops = [];
+    if (withLines || withNextStops) {
         const stops = [stop, ...Object.values(gtfs!.stops).filter((s) => s.parentStation === stop.id)];
-
-        lines = [];
         const linesIds = new Set<string>();
         for (const stop of stops) {
             for (const stopTime of stop.stopTimes) {
@@ -188,20 +187,36 @@ const getStop = (stop: Stop, withLines: boolean): any => {
                 linesIds.add(trip.lineId + "-" + trip.direction);
                 const line = getLine(gtfs!.lines[trip.lineId]!, true, false);
                 const direction = line.stops!.filter((s) => s.direction === trip.direction).slice(-1)[0]!;
-                const oldLine = lines.find((l) => l.id === line.id);
+                const oldLine = (lines as any[]).find((l) => l.id === line.id);
                 if (oldLine) oldLine.directions.push(direction);
-                else
-                    lines.push({
-                        id: line.id,
-                        shortName: line.shortName,
-                        longName: line.longName,
-                        color: line.color,
-                        directions: [direction]
-                    });
+                else lines.push({ ...getLine(gtfs!.lines[trip.lineId]!, false, false), directions: [direction] });
             }
         }
-
         lines.sort((a, b) => a.shortName.localeCompare(b.shortName, undefined, { numeric: true }));
+
+        if (withNextStops) {
+            const stopsIds = new Set<string>(stops.map((s) => s.id));
+            const gNextStops = [];
+            for (const line of lines) {
+                const computedTrips = computeTrips(
+                    gtfs!.lines[line.id]!,
+                    Date.now() - 2 * 24 * 60 * 60 * 1000,
+                    Date.now() + 24 * 60 * 60 * 1000
+                );
+
+                for (const trip of computedTrips) {
+                    for (const stopTime of gtfs!.trips[trip.trip.id]!.stopTimes) {
+                        if (!stopsIds.has(stopTime.stopId)) continue;
+                        const time = toDateTime(trip.date, stopTime.departureTime).getTime();
+                        if (time < Date.now() - 15 * 60 * 1000) continue;
+                        gNextStops.push({ line: line.id, direction: trip.trip.direction, stop: stopTime.stopId, time });
+                    }
+                }
+            }
+            gNextStops.sort((a, b) => a.time - b.time);
+            const minNextStop = gNextStops.findIndex((nextStop) => nextStop.time >= Date.now() + 30 * 60 * 1000);
+            nextStops.push(...gNextStops.slice(0, Math.max(minNextStop, 25)));
+        }
     }
 
     return {
@@ -211,7 +226,8 @@ const getStop = (stop: Stop, withLines: boolean): any => {
         parent: stop.parentStation ? getStop(gtfs!.stops[stop.parentStation]!, false) : null,
         lat: stop.latitude,
         lon: stop.longitude,
-        ...(withLines ? { lines } : {})
+        ...(withLines ? { lines } : {}),
+        ...(withNextStops ? { nextStops } : {})
     };
 };
 
@@ -219,7 +235,7 @@ app.get("/stops/:id", (req, res) => {
     const stop = gtfs!.stops[req.params.id];
     if (!stop) return res.status(404).json({ error: "Stop not found" });
 
-    res.json(getStop(stop, true));
+    res.json(getStop(stop, true, true));
 });
 
 const server = http.createServer(app);
