@@ -30,16 +30,24 @@ export const LinePanel = ({
             <div className="section-title">Trajets</div>
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
-                    <button key={i} className="double">
-                        <span>
-                            <div>Direction</div>
-                            <div>{fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}</div>
-                        </span>
-                        <span style={{ whiteSpace: "nowrap" }}>
-                            {formatTime(new Date(trip.stops[0].time))} -{" "}
-                            {formatTime(new Date(trip.stops.slice(-1)[0].time))}
-                        </span>
-                    </button>
+                    <Fragment key={i}>
+                        {new Date(trip.stops[0].time).getDate() !==
+                            new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
+                            <div className="section-subtitle">Demain</div>
+                        )}
+                        <button className="double">
+                            <span>
+                                <div>Direction</div>
+                                <div>
+                                    {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
+                                </div>
+                            </span>
+                            <span style={{ whiteSpace: "nowrap" }}>
+                                {formatTime(new Date(trip.stops[0].time))} -{" "}
+                                {formatTime(new Date(trip.stops.slice(-1)[0].time))}
+                            </span>
+                        </button>
+                    </Fragment>
                 ))}
             </div>
 
