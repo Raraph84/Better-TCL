@@ -60,6 +60,7 @@ export const StopPanel = ({
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const [fullStop, setFullStop] = useState<any>(null);
+    const [showPreviousStops, setShowPreviousStops] = useState(false);
 
     useEffect(() => {
         if (!stop) return;
@@ -74,6 +75,8 @@ export const StopPanel = ({
         return () => setForcedLines(null);
     }, [stop]);
 
+    const nextStops = fullStop?.nextStops.filter((stop: any) => showPreviousStops || stop.time >= Date.now());
+
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
             {fullStop?.parent && (
@@ -81,6 +84,7 @@ export const StopPanel = ({
                     Voir l'arrêt parent
                 </button>
             )}
+
             <div className="section-title">Lignes</div>
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
@@ -89,9 +93,15 @@ export const StopPanel = ({
                     </button>
                 ))}
             </div>
-            <div className="section-title">Prochains passages</div>
+
+            <div className="section-title">Passages</div>
+            {fullStop?.nextStops.some((stop: any) => stop.time < Date.now()) && (
+                <button className="button" onClick={() => setShowPreviousStops(!showPreviousStops)}>
+                    {showPreviousStops ? "Masquer les passages précédents" : "Afficher les passages précédents"}
+                </button>
+            )}
             <div className="next-stops">
-                {fullStop?.nextStops.map((nextStop: any, i: number) => {
+                {nextStops?.map((nextStop: any, i: number) => {
                     const time = `${new Date(nextStop.time).getHours().toString().padStart(2, "0")}:${new Date(nextStop.time).getMinutes().toString().padStart(2, "0")}`;
                     const line = fullStop.lines.find((l: any) => l.id === nextStop.line);
                     const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
