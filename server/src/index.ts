@@ -155,6 +155,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
         shortName: line.shortName,
         longName: line.longName,
         color: line.color,
+        textColor: line.textColor,
         ...(withStops ? { stops } : {}),
         ...(withTrips ? { trips } : {})
     };

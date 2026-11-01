@@ -115,7 +115,9 @@ export const StopPanel = ({
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
                     <button key={line.id} onClick={() => setPanel({ type: "line", data: line })} className="double">
-                        <span>Ligne {line.shortName}</span>
+                        <span>
+                            Ligne <LineBadge line={line} />
+                        </span>
                         <span>
                             {line.directions.map((direction: any) => (
                                 <div key={direction}>
@@ -145,7 +147,9 @@ export const StopPanel = ({
                             )}
                             <button>
                                 <span>
-                                    <div>Ligne {line.shortName}</div>
+                                    <div>
+                                        Ligne <LineBadge line={line} />
+                                    </div>
                                     <div>Vers {directionStops.slice(-1)[0].name}</div>
                                 </span>
                                 <span>{formatTime(new Date(nextStop.time))}</span>
@@ -191,3 +195,9 @@ export const TripPanel = ({
 
 const formatTime = (time: Date) =>
     `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+
+const LineBadge = ({ line }: { line: any }) => (
+    <span className="line-badge" style={{ backgroundColor: "#" + line.color, color: "#" + line.textColor }}>
+        {line.shortName}
+    </span>
+);
