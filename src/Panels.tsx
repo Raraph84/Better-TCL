@@ -88,8 +88,13 @@ export const StopPanel = ({
             <div className="section-title">Lignes</div>
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
-                    <button key={line.id} className="line" onClick={() => setPanel({ type: "line", data: line })}>
-                        Ligne {line.shortName}
+                    <button key={line.id} onClick={() => setPanel({ type: "line", data: line })} className="double">
+                        <span>Ligne {line.shortName}</span>
+                        <span>
+                            {line.directions.map((direction: any) => (
+                                <div key={direction.direction}>{direction.name}</div>
+                            ))}
+                        </span>
                     </button>
                 ))}
             </div>
