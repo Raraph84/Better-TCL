@@ -108,7 +108,9 @@ export const StopPanel = ({
                         <span>Ligne {line.shortName}</span>
                         <span>
                             {line.directions.map((direction: any) => (
-                                <div key={direction.direction}>{direction.name}</div>
+                                <div key={direction}>
+                                    {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
+                                </div>
                             ))}
                         </span>
                     </button>
@@ -123,8 +125,8 @@ export const StopPanel = ({
             )}
             <div className="next-stops">
                 {nextStops?.map((nextStop: any, i: number) => {
-                    const line = fullStop.lines.find((l: any) => l.id === nextStop.lineId);
-                    const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
+                    const line = fullStop.lines.find((line: any) => line.id === nextStop.lineId);
+                    const directionStops = line.stops.filter((stop: any) => stop.direction === nextStop.direction);
                     return (
                         <Fragment key={i}>
                             {new Date(nextStop.time).getDate() !==
@@ -134,7 +136,7 @@ export const StopPanel = ({
                             <button>
                                 <span>
                                     <div>Ligne {line.shortName}</div>
-                                    <div>Vers {direction.name}</div>
+                                    <div>Vers {directionStops.slice(-1)[0].name}</div>
                                 </span>
                                 <span>{formatTime(new Date(nextStop.time))}</span>
                             </button>

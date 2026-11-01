@@ -97,10 +97,10 @@ const computeTrips = (line: Line, startDate: number, endDate: number) => {
 };
 
 app.get("/lines", (req, res) => {
-    res.json({ lines: Object.values(gtfs!.lines).map((line) => getLine(line, false, false)) });
+    res.json({ lines: Object.values(gtfs!.lines).map((line) => getLine(line)) });
 });
 
-const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
+const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = false) => {
     let stops;
     if (withStops) {
         stops = [];
@@ -109,8 +109,7 @@ const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
             for (const stopTime of trip.stopTimes) {
                 if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
                 stopsIds.add(trip.direction + "-" + stopTime.stopId);
-                const stop = gtfs!.stops[stopTime.stopId]!;
-                stops.push({ ...getStop(stop, false), direction: trip.direction });
+                stops.push({ ...getStop(gtfs!.stops[stopTime.stopId]!), direction: trip.direction });
             }
         }
     }
@@ -161,25 +160,24 @@ app.get("/lines/:id", (req, res) => {
 });
 
 app.get("/stops", (req, res) => {
-    res.json({ stops: Object.values(gtfs!.stops).map((stop) => getStop(stop, false)) });
+    res.json({ stops: Object.values(gtfs!.stops).map((stop) => getStop(stop)) });
 });
 
-const getStop = (stop: Stop, withLines: boolean, withNextStops: boolean = false): any => {
+const getStop = (stop: Stop, withLines: boolean = false, withNextStops: boolean = false): any => {
     const lines = [];
     const nextStops = [];
     if (withLines || withNextStops) {
         const stops = [stop, ...Object.values(gtfs!.stops).filter((s) => s.parentStation === stop.id)];
+
         const linesIds = new Set<string>();
         for (const stop of stops) {
             for (const stopTime of stop.stopTimes) {
                 const trip = gtfs!.trips[stopTime.tripId]!;
                 if (linesIds.has(trip.lineId + "-" + trip.direction)) continue;
                 linesIds.add(trip.lineId + "-" + trip.direction);
-                const line = getLine(gtfs!.lines[trip.lineId]!, true, false);
-                const direction = line.stops!.filter((s) => s.direction === trip.direction).slice(-1)[0]!;
-                const oldLine = (lines as any[]).find((l) => l.id === line.id);
-                if (oldLine) oldLine.directions.push(direction);
-                else lines.push({ ...getLine(gtfs!.lines[trip.lineId]!, false, false), directions: [direction] });
+                const oldLine = (lines as any[]).find((l) => l.id === trip.lineId);
+                if (oldLine) oldLine.directions.push(trip.direction);
+                else lines.push({ ...getLine(gtfs!.lines[trip.lineId]!, true), directions: [trip.direction] });
             }
         }
         lines.sort((a, b) => a.shortName.localeCompare(b.shortName, undefined, { numeric: true }));
@@ -221,7 +219,7 @@ const getStop = (stop: Stop, withLines: boolean, withNextStops: boolean = false)
         id: stop.id,
         name: stop.name,
         zone: stop.zoneId,
-        parent: stop.parentStation ? getStop(gtfs!.stops[stop.parentStation]!, false) : null,
+        parent: stop.parentStation ? getStop(gtfs!.stops[stop.parentStation]!) : null,
         lat: stop.latitude,
         lon: stop.longitude,
         ...(withLines ? { lines } : {}),
