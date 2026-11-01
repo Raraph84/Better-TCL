@@ -27,8 +27,9 @@ export const LinePanel = ({
 
     return (
         <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => setPanel(null)}>
+            <div className="section-title">Arrêts</div>
             <button
-                className="direction"
+                className="button direction"
                 onClick={() => setDirection(direction === "outbound" ? "inbound" : "outbound")}
             >
                 <span>
@@ -76,8 +77,11 @@ export const StopPanel = ({
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
             {fullStop?.parent && (
-                <button onClick={() => setPanel({ type: "stop", data: fullStop.parent })}>Voir l'arrêt parent</button>
+                <button className="button" onClick={() => setPanel({ type: "stop", data: fullStop.parent })}>
+                    Voir l'arrêt parent
+                </button>
             )}
+            <div className="section-title">Lignes</div>
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
                     <button key={line.id} className="line" onClick={() => setPanel({ type: "line", data: line })}>
@@ -85,14 +89,19 @@ export const StopPanel = ({
                     </button>
                 ))}
             </div>
-            <div className="lines">
+            <div className="section-title">Prochains passages</div>
+            <div className="next-stops">
                 {fullStop?.nextStops.map((nextStop: any, i: number) => {
                     const time = `${new Date(nextStop.time).getHours().toString().padStart(2, "0")}:${new Date(nextStop.time).getMinutes().toString().padStart(2, "0")}`;
                     const line = fullStop.lines.find((l: any) => l.id === nextStop.line);
                     const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
                     return (
-                        <button key={i} className="left">
-                            {time} {line.shortName} vers {direction.name}
+                        <button key={i}>
+                            <span>
+                                <div>Ligne {line.shortName}</div>
+                                <div>Vers {direction.name}</div>
+                            </span>
+                            <span>{time}</span>
                         </button>
                     );
                 })}
@@ -125,7 +134,9 @@ export const TripPanel = ({
             open={trip}
             onClose={() => setPanel(null)}
         >
-            <button onClick={() => setPanel({ type: "line", data: trip?.line })}>Voir la ligne</button>
+            <button className="button" onClick={() => setPanel({ type: "line", data: trip?.line })}>
+                Voir la ligne
+            </button>
         </Panel>
     );
 };
