@@ -35,7 +35,7 @@ export const LinePanel = ({
                             new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
                             <div className="section-subtitle">Demain</div>
                         )}
-                        <button className="double">
+                        <button className="double" onClick={() => setPanel({ type: "trip", data: { line } })}>
                             <span>
                                 <div>Direction</div>
                                 <div>
@@ -145,7 +145,7 @@ export const StopPanel = ({
                                 new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
                                 <div className="section-subtitle">Demain</div>
                             )}
-                            <button>
+                            <button onClick={() => setPanel({ type: "trip", data: { line } })}>
                                 <span>
                                     <div>
                                         Ligne <LineBadge line={line} />
@@ -182,7 +182,7 @@ export const TripPanel = ({
 
     return (
         <Panel
-            title={"Service - Ligne " + (trip?.line?.shortName ?? fullTrip?.line.shortName)}
+            title={"Trajet - Ligne " + (trip?.line?.shortName ?? fullTrip?.line.shortName)}
             open={trip}
             onClose={() => setPanel(null)}
         >
