@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
 import { Panel } from "./Panel.js";
@@ -73,10 +73,17 @@ const App = () => {
         return false;
     });
 
+    const defaultLocation = JSON.parse(localStorage.getItem("location") ?? "{}");
+
     return (
         <>
-            <MapContainer center={[45.75, 4.85]} zoom={13} zoomControl={false}>
+            <MapContainer
+                center={defaultLocation.center ?? [45.75, 4.85]}
+                zoom={defaultLocation.zoom ?? 13}
+                zoomControl={false}
+            >
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/stamen_toner_dark/{z}/{x}/{y}{r}.png" /> 
+                <LocationSaver />
                 <LinesLayer features={visibleLines ?? []} lines={lines} setPanel={setPanel} />
                 <StopsLayer stops={stops ?? []} setPanel={setPanel} />
                 <VehiclesLayer
@@ -131,6 +138,14 @@ const App = () => {
             </Panel>
         </>
     );
+};
+
+export const LocationSaver = () => {
+    const map = useMap();
+    const save = () =>
+        localStorage.setItem("location", JSON.stringify({ center: map.getCenter(), zoom: map.getZoom() }));
+    useMapEvents({ moveend: save, zoomend: save });
+    return null;
 };
 
 createRoot(document.getElementById("root")!).render(<App />);
