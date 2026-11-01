@@ -110,15 +110,7 @@ const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
                 if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
                 stopsIds.add(trip.direction + "-" + stopTime.stopId);
                 const stop = gtfs!.stops[stopTime.stopId]!;
-                stops.push({
-                    id: stop.id,
-                    name: stop.name,
-                    zone: stop.zoneId,
-                    parent: stop.parentStation,
-                    lat: stop.latitude,
-                    lon: stop.longitude,
-                    direction: trip.direction
-                });
+                stops.push({ ...getStop(stop, false), direction: trip.direction });
             }
         }
     }
@@ -132,23 +124,21 @@ const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
         );
 
         trips = computedTrips.map((trip) => ({
-            tripDate: trip.date.getTime(),
-            tripId: trip.trip.id,
+            serviceDate: trip.date.getTime(),
             serviceId: trip.service.id,
-            headsign: trip.trip.headsign,
+            tripId: trip.trip.id,
             direction: trip.trip.direction,
             stops: gtfs!.trips[trip.trip.id]!.stopTimes.map((stopTime) => ({
                 stopId: stopTime.stopId,
-                departureTime: toDateTime(trip.date, stopTime.departureTime).getTime(),
-                arrivalTime: toDateTime(trip.date, stopTime.arrivalTime).getTime()
+                time: toDateTime(trip.date, stopTime.departureTime).getTime()
             }))
         }));
-        trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
+        trips.sort((a, b) => a.stops[0]!.time - b.stops[0]!.time);
 
         const firstCurrent = trips.findIndex(
-            (trip) => trip.stops[trip.stops.length - 1]!.departureTime >= Date.now() - 15 * 60 * 1000
+            (trip) => trip.stops[trip.stops.length - 1]!.time >= Date.now() - 15 * 60 * 1000
         );
-        const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
+        const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.time >= Date.now() - 15 * 60 * 1000);
 
         trips = trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10));
     }
@@ -209,7 +199,15 @@ const getStop = (stop: Stop, withLines: boolean, withNextStops: boolean = false)
                         if (!stopsIds.has(stopTime.stopId)) continue;
                         const time = toDateTime(trip.date, stopTime.departureTime).getTime();
                         if (time < Date.now() - 15 * 60 * 1000) continue;
-                        gNextStops.push({ line: line.id, direction: trip.trip.direction, stop: stopTime.stopId, time });
+                        gNextStops.push({
+                            lineId: line.id,
+                            serviceDate: trip.date.getTime(),
+                            serviceId: trip.service.id,
+                            tripId: trip.trip.id,
+                            direction: trip.trip.direction,
+                            stopId: stopTime.stopId,
+                            time
+                        });
                     }
                 }
             }

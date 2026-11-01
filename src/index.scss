@@ -134,12 +134,13 @@ body {
         justify-content: space-between;
         margin: 0 -20px;
         padding: 6px 20px;
+        gap: 8px;
 
         &.double {
             min-height: 57px;
         }
 
-        :last-child {
+        > span:last-child {
             text-align: right;
         }
 

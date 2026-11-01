@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Panel } from "./Panel.js";
 
 export const LinePanel = ({
@@ -107,23 +107,22 @@ export const StopPanel = ({
             )}
             <div className="next-stops">
                 {nextStops?.map((nextStop: any, i: number) => {
-                    const time = `${new Date(nextStop.time).getHours().toString().padStart(2, "0")}:${new Date(nextStop.time).getMinutes().toString().padStart(2, "0")}`;
-                    const line = fullStop.lines.find((l: any) => l.id === nextStop.line);
+                    const line = fullStop.lines.find((l: any) => l.id === nextStop.lineId);
                     const direction = line?.directions.find((d: any) => d.direction === nextStop.direction);
                     return (
-                        <>
+                        <Fragment key={i}>
                             {new Date(nextStop.time).getDate() !==
                                 new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
                                 <div className="section-subtitle">Demain</div>
                             )}
-                            <button key={i}>
+                            <button>
                                 <span>
                                     <div>Ligne {line.shortName}</div>
                                     <div>Vers {direction.name}</div>
                                 </span>
-                                <span>{time}</span>
+                                <span>{formatTime(new Date(nextStop.time))}</span>
                             </button>
-                        </>
+                        </Fragment>
                     );
                 })}
             </div>
@@ -161,3 +160,6 @@ export const TripPanel = ({
         </Panel>
     );
 };
+
+const formatTime = (time: Date) =>
+    `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
