@@ -201,19 +201,24 @@ app.get("/stops/:id", (req, res) => {
     const stops = Object.values(gtfs!.stops).filter((s) => s.parentStation === (stop.parentStation ?? stop.id));
 
     const linesIds = new Set<string>();
-    const lines = [];
+    const lines: any[] = [];
     for (const stop of stops) {
         for (const stopTime of stop.stopTimes) {
-            const lineId = gtfs!.trips[stopTime.tripId]!.lineId;
-            if (linesIds.has(lineId)) continue;
-            linesIds.add(lineId);
-            const line = gtfs!.lines[gtfs!.trips[stopTime.tripId]!.lineId]!;
-            lines.push({
-                id: line.id,
-                shortName: line.shortName,
-                longName: line.longName,
-                color: line.color
-            });
+            const trip = gtfs!.trips[stopTime.tripId]!;
+            if (linesIds.has(trip.lineId + "-" + trip.direction)) continue;
+            linesIds.add(trip.lineId + "-" + trip.direction);
+            const line = getLine(gtfs!.lines[trip.lineId]!, true, false);
+            const direction = line.stops!.filter((s) => s.direction === trip.direction).slice(-1)[0]!;
+            const oldLine = lines.find((l) => l.id === line.id);
+            if (oldLine) oldLine.directions.push(direction);
+            else
+                lines.push({
+                    id: line.id,
+                    shortName: line.shortName,
+                    longName: line.longName,
+                    color: line.color,
+                    directions: [direction]
+                });
         }
     }
 
