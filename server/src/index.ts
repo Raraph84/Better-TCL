@@ -111,62 +111,74 @@ app.get("/lines", (req, res) => {
     });
 });
 
-app.get("/lines/:id", (req, res) => {
-    const gtfsLine = gtfs!.lines[req.params.id];
-    if (!gtfsLine) return res.status(404).json({ error: "Line not found" });
-
-    const stops = [];
-    const stopsIds = new Set<string>();
-    for (const trip of gtfsLine.trips) {
-        for (const stopTime of trip.stopTimes) {
-            if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
-            stopsIds.add(trip.direction + "-" + stopTime.stopId);
-            const stop = gtfs!.stops[stopTime.stopId]!;
-            stops.push({
-                id: stop.id,
-                name: stop.name,
-                zone: stop.zoneId,
-                parent: stop.parentStation,
-                lat: stop.latitude,
-                lon: stop.longitude,
-                direction: trip.direction
-            });
+const getLine = (line: Line, withStops: boolean, withTrips: boolean) => {
+    let stops;
+    if (withStops) {
+        stops = [];
+        const stopsIds = new Set<string>();
+        for (const trip of line.trips) {
+            for (const stopTime of trip.stopTimes) {
+                if (stopsIds.has(trip.direction + "-" + stopTime.stopId)) continue;
+                stopsIds.add(trip.direction + "-" + stopTime.stopId);
+                const stop = gtfs!.stops[stopTime.stopId]!;
+                stops.push({
+                    id: stop.id,
+                    name: stop.name,
+                    zone: stop.zoneId,
+                    parent: stop.parentStation,
+                    lat: stop.latitude,
+                    lon: stop.longitude,
+                    direction: trip.direction
+                });
+            }
         }
     }
 
-    const computedTrips = computeTrips(
-        gtfsLine,
-        Date.now() - 2 * 24 * 60 * 60 * 1000,
-        Date.now() + 24 * 60 * 60 * 1000
-    );
+    let trips;
+    if (withTrips) {
+        const computedTrips = computeTrips(
+            line,
+            Date.now() - 2 * 24 * 60 * 60 * 1000,
+            Date.now() + 24 * 60 * 60 * 1000
+        );
 
-    const trips = computedTrips.map((trip) => ({
-        tripDate: trip.date.getTime(),
-        tripId: trip.trip.id,
-        serviceId: trip.service.id,
-        headsign: trip.trip.headsign,
-        direction: trip.trip.direction,
-        stops: gtfs!.trips[trip.trip.id]!.stopTimes.map((stopTime) => ({
-            stopId: stopTime.stopId,
-            departureTime: toDateTime(trip.date, stopTime.departureTime).getTime(),
-            arrivalTime: toDateTime(trip.date, stopTime.arrivalTime).getTime()
-        }))
-    }));
-    trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
+        trips = computedTrips.map((trip) => ({
+            tripDate: trip.date.getTime(),
+            tripId: trip.trip.id,
+            serviceId: trip.service.id,
+            headsign: trip.trip.headsign,
+            direction: trip.trip.direction,
+            stops: gtfs!.trips[trip.trip.id]!.stopTimes.map((stopTime) => ({
+                stopId: stopTime.stopId,
+                departureTime: toDateTime(trip.date, stopTime.departureTime).getTime(),
+                arrivalTime: toDateTime(trip.date, stopTime.arrivalTime).getTime()
+            }))
+        }));
+        trips.sort((a, b) => a.stops[0]!.departureTime - b.stops[0]!.departureTime);
 
-    const firstCurrent = trips.findIndex(
-        (trip) => trip.stops[trip.stops.length - 1]!.departureTime >= Date.now() - 15 * 60 * 1000
-    );
-    const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
+        const firstCurrent = trips.findIndex(
+            (trip) => trip.stops[trip.stops.length - 1]!.departureTime >= Date.now() - 15 * 60 * 1000
+        );
+        const lastCurrent = trips.findIndex((trip) => trip.stops[0]!.departureTime >= Date.now() - 15 * 60 * 1000);
 
-    res.json({
-        id: gtfsLine.id,
-        shortName: gtfsLine.shortName,
-        longName: gtfsLine.longName,
-        color: gtfsLine.color,
-        trips: trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10)),
-        stops
-    });
+        trips = trips.slice(firstCurrent, Math.max(lastCurrent, firstCurrent + 10));
+    }
+
+    return {
+        id: line.id,
+        shortName: line.shortName,
+        longName: line.longName,
+        color: line.color,
+        ...(withStops ? { stops } : {}),
+        ...(withTrips ? { trips } : {})
+    };
+};
+
+app.get("/lines/:id", (req, res) => {
+    const line = gtfs!.lines[req.params.id];
+    if (!line) return res.status(404).json({ error: "Line not found" });
+
+    res.json(getLine(line, true, true));
 });
 
 app.get("/stops", (req, res) => {
