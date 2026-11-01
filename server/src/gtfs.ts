@@ -102,8 +102,24 @@ export const parseGtfs = async (gtfs: Buffer) => {
             stopTimes: []
         };
 
-    for (const serviceException of serviceExceptions)
-        services[serviceException.serviceId]?.exceptions.push(serviceException);
+    for (const serviceException of serviceExceptions) {
+        if (!services[serviceException.serviceId]) {
+            services[serviceException.serviceId] = {
+                id: serviceException.serviceId,
+                monday: false,
+                tuesday: false,
+                wednesday: false,
+                thursday: false,
+                friday: false,
+                saturday: false,
+                sunday: false,
+                startDate: new Date(0),
+                endDate: new Date(2100, 0, 1),
+                exceptions: []
+            };
+        }
+        services[serviceException.serviceId]!.exceptions.push(serviceException);
+    }
     for (const stopTime of stopTimes) {
         trips[stopTime.tripId]!.stopTimes.push(stopTime);
         stops[stopTime.stopId]!.stopTimes.push(stopTime);
