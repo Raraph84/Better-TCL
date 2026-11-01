@@ -27,6 +27,22 @@ export const LinePanel = ({
 
     return (
         <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => setPanel(null)}>
+            <div className="section-title">Trajets</div>
+            <div className="trips">
+                {fullLine?.trips.map((trip: any, i: number) => (
+                    <button key={i} className="double">
+                        <span>
+                            <div>Direction</div>
+                            <div>{fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}</div>
+                        </span>
+                        <span style={{ whiteSpace: "nowrap" }}>
+                            {formatTime(new Date(trip.stops[0].time))} -{" "}
+                            {formatTime(new Date(trip.stops.slice(-1)[0].time))}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
             <div className="section-title">Arrêts</div>
             <button
                 className="button direction"
