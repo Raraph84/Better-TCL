@@ -64,9 +64,7 @@ setInterval(updateGtfs, 60 * 60 * 1000);
 app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
 const computeServices = (trips: Trip[], startDate: number, endDate: number) => {
-    const serviceIds = new Set(trips.map((trip) => trip.serviceId));
     const services = new Set(trips.map((trip) => gtfs!.services[trip.serviceId]!).filter((service) => service));
-    const serviceExceptions = gtfs!.serviceExceptions.filter((se) => serviceIds.has(se.serviceId));
 
     const computedServices = [];
     for (const service of services) {
@@ -79,9 +77,7 @@ const computeServices = (trips: Trip[], startDate: number, endDate: number) => {
             if (date.getDay() === 4 && !service.thursday) continue;
             if (date.getDay() === 5 && !service.friday) continue;
             if (date.getDay() === 6 && !service.saturday) continue;
-            const serviceException = serviceExceptions.find(
-                (se) => se.serviceId === service.id && se.date.getTime() === date.getTime()
-            );
+            const serviceException = service.exceptions.find((se) => se.date.getTime() === date.getTime());
             if (serviceException?.exceptionType === "removed") continue;
             computedServices.push({ date: new Date(date), service });
         }

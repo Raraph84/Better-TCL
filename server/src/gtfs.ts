@@ -39,7 +39,8 @@ export const parseGtfs = async (gtfs: Buffer) => {
             saturday: pickValue({ "0": false, "1": true }, service[6]!),
             sunday: pickValue({ "0": false, "1": true }, service[7]!),
             startDate: toDate(service[8]!),
-            endDate: toDate(service[9]!)
+            endDate: toDate(service[9]!),
+            exceptions: []
         };
     const serviceExceptions: ServiceException[] = (await parse(zip, "calendar_dates.txt")).map((serviceException) => ({
         serviceId: serviceException[0]!,
@@ -101,6 +102,8 @@ export const parseGtfs = async (gtfs: Buffer) => {
             stopTimes: []
         };
 
+    for (const serviceException of serviceExceptions)
+        services[serviceException.serviceId]?.exceptions.push(serviceException);
     for (const stopTime of stopTimes) {
         trips[stopTime.tripId]!.stopTimes.push(stopTime);
         stops[stopTime.stopId]!.stopTimes.push(stopTime);
@@ -121,6 +124,7 @@ export type Service = {
     sunday: boolean;
     startDate: Date;
     endDate: Date;
+    exceptions: ServiceException[];
 };
 
 export type ServiceException = {
