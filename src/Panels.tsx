@@ -145,7 +145,14 @@ export const StopPanel = ({
                                 new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
                                 <div className="section-subtitle">Demain</div>
                             )}
-                            <button onClick={() => setPanel({ type: "trip", data: { line } })}>
+                            <button
+                                onClick={() => setPanel({ type: "trip", data: { line } })}
+                                style={
+                                    nextStop.time >= Date.now() - 60 * 1000
+                                        ? {}
+                                        : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
+                                }
+                            >
                                 <span>
                                     <div>
                                         Ligne <LineBadge line={line} />
