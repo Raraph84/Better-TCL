@@ -84,7 +84,7 @@ const App = () => {
                 zoomControl={false}
                 renderer={new Canvas({ tolerance: 10 })}
             >
-                <TileLayer url="https://tiles.stadiamaps.com/tiles/stamen_toner_dark/{z}/{x}/{y}{r}.png" /> 
+                <TileLayer url={import.meta.env.VITE_TILES_HOST} /> 
                 <LocationSaver />
                 <LinesLayer features={visibleLines ?? []} lines={lines} setPanel={setPanel} />
                 <StopsLayer stops={stops ?? []} setPanel={setPanel} />
