@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Canvas } from "leaflet";
-import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
 import { Panel } from "./Panel.js";
@@ -26,6 +26,7 @@ const App = () => {
         bus: boolean;
         jd: boolean;
     }>({ met: true, fun: true, tra: true, trambus: true, navi: true, rx: true, bus: false, jd: false });
+    const [position, setPosition] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
 
     useEffect(() => {
         fetch(import.meta.env.VITE_SERVER_HOST + "/stops")
@@ -57,6 +58,22 @@ const App = () => {
             });
         };
         connect();
+    }, []);
+
+    useEffect(() => {
+        const watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                setPosition({
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy
+                });
+            },
+            (err) => {},
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
+
+        return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
     const visibleLines = linesGeojson?.filter((f: any) => {
@@ -94,6 +111,16 @@ const App = () => {
                     vehicles={Object.values(trackedVehicles)}
                     setPanel={setPanel}
                 />
+                {position && (
+                    <CircleMarker
+                        center={[position.lat, position.lng]}
+                        fillOpacity={1}
+                        fillColor="#3333ff"
+                        color="#ffffff"
+                        radius={8}
+                        weight={2}
+                    />
+                )}
             </MapContainer>
 
             <LinePanel
@@ -117,6 +144,7 @@ const App = () => {
                     <i className="fa-solid fa-filter" />
                 </button>
             </div>
+
             <Panel title="Filtres" open={panel?.type === "filters"} onClose={() => setPanel(null)}>
                 {[
                     { name: "Métro", key: "met" },
