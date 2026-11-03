@@ -38,7 +38,7 @@ export const LinesLayer = ({
 }: {
     features: any[];
     lines: any;
-    setPanel: (panel: { type: any; data: any }) => void;
+    setPanel: (panel: { type: any; id?: number } | null) => void;
 }) => {
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
@@ -71,11 +71,7 @@ export const LinesLayer = ({
                 opacity: 0.9
             })}
             eventHandlers={{
-                click: (event) => {
-                    const feature = event.sourceTarget.feature;
-                    const line = lines.find((line: any) => line.id === feature.properties.code_ligne);
-                    setPanel({ type: "line", data: line });
-                }
+                click: (event) => setPanel({ type: "line", id: event.sourceTarget.feature.properties.code_ligne })
             }}
         />
     );
@@ -149,7 +145,7 @@ export const VehiclesLayer = ({
     lines: any;
     forcedLines: string[] | null;
     vehicles: { [key: string]: any };
-    setPanel: (panel: any) => void;
+    setPanel: (panel: { type: any; id?: number } | null) => void;
 }) => {
     return vehicles.map((vehicle: any) => {
         const lineId = vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "");
@@ -160,13 +156,19 @@ export const VehiclesLayer = ({
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
                 color={line ? `#${line.color}` : "#aaaaaa"}
-                onClick={() => setPanel({ type: "trip", data: { line, vehicle } })}
+                onClick={() => setPanel({ type: "trip", id: line.id })}
             />
         );
     });
 };
 
-export const StopsLayer = ({ stops, setPanel }: { stops: any[]; setPanel: (panel: any) => void }) => {
+export const StopsLayer = ({
+    stops,
+    setPanel
+}: {
+    stops: any[];
+    setPanel: (panel: { type: any; id?: number } | null) => void;
+}) => {
     const map = useMap();
     const [view, setView] = useState(() => ({ bounds: map.getBounds(), zoom: map.getZoom() }));
 
@@ -186,7 +188,7 @@ export const StopsLayer = ({ stops, setPanel }: { stops: any[]; setPanel: (panel
             center={[stop.lat, stop.lon]}
             radius={view.zoom < 13 ? 3 : 5}
             color="white"
-            eventHandlers={{ click: () => setPanel({ type: "stop", data: stop }) }}
+            eventHandlers={{ click: () => setPanel({ type: "stop", id: stop.id }) }}
         />
     ));
 };

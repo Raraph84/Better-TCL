@@ -13,7 +13,7 @@ const App = () => {
     const [stops, setStops] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
-    const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; data: any } | null>(null);
+    const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; id?: number } | null>(null);
     const [forcedLines, setForcedLines] = useState<string[] | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
@@ -97,23 +97,23 @@ const App = () => {
             </MapContainer>
 
             <LinePanel
-                line={panel?.type === "line" ? panel?.data : null}
+                line={panel?.type === "line" ? lines.find((line: any) => line.id === panel.id) : null}
                 setPanel={setPanel}
                 setForcedLines={setForcedLines}
             />
             <StopPanel
-                stop={panel?.type === "stop" ? panel?.data : null}
+                stop={panel?.type === "stop" ? stops.find((stop: any) => stop.id === panel.id) : null}
                 setPanel={setPanel}
                 setForcedLines={setForcedLines}
             />
             <TripPanel
-                trip={panel?.type === "trip" ? panel?.data : null}
+                trip={panel?.type === "trip" ? { line: lines.find((line: any) => line.id === panel.id) } : null}
                 setPanel={setPanel}
                 setForcedLines={setForcedLines}
             />
 
             <div className="right-buttons">
-                <button onClick={() => setPanel({ type: "filters", data: null })}>
+                <button onClick={() => setPanel({ type: "filters" })}>
                     <i className="fa-solid fa-filter" />
                 </button>
             </div>

@@ -7,7 +7,7 @@ export const LinePanel = ({
     setForcedLines
 }: {
     line: any;
-    setPanel: (panel: { type: any; data: any } | null) => void;
+    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const [fullLine, setFullLine] = useState<any>(null);
@@ -35,7 +35,7 @@ export const LinePanel = ({
                             new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
                             <div className="section-subtitle">Demain</div>
                         )}
-                        <button className="double" onClick={() => setPanel({ type: "trip", data: { line } })}>
+                        <button className="double" onClick={() => setPanel({ type: "trip", id: line.id })}>
                             <span>
                                 <div>Direction</div>
                                 <div>
@@ -65,7 +65,7 @@ export const LinePanel = ({
             </button>
             <div className="stops">
                 {stops?.map((stop: any) => (
-                    <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", data: stop })}>
+                    <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", id: stop.id })}>
                         {stop.name}
                     </button>
                 ))}
@@ -80,7 +80,7 @@ export const StopPanel = ({
     setForcedLines
 }: {
     stop: any;
-    setPanel: (panel: { type: any; data: any } | null) => void;
+    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const [fullStop, setFullStop] = useState<any>(null);
@@ -106,7 +106,7 @@ export const StopPanel = ({
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
             {fullStop?.parent && (
-                <button className="button" onClick={() => setPanel({ type: "stop", data: fullStop.parent })}>
+                <button className="button" onClick={() => setPanel({ type: "stop", id: fullStop.parent.id })}>
                     Voir l'arrêt parent
                 </button>
             )}
@@ -114,7 +114,7 @@ export const StopPanel = ({
             <div className="section-title">Lignes</div>
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
-                    <button key={line.id} onClick={() => setPanel({ type: "line", data: line })} className="double">
+                    <button key={line.id} onClick={() => setPanel({ type: "line", id: line.id })} className="double">
                         <span>
                             Ligne <LineBadge line={line} />
                         </span>
@@ -146,7 +146,7 @@ export const StopPanel = ({
                                 <div className="section-subtitle">Demain</div>
                             )}
                             <button
-                                onClick={() => setPanel({ type: "trip", data: { line } })}
+                                onClick={() => setPanel({ type: "trip", id: line.id })}
                                 style={
                                     nextStop.time >= Date.now() - 60 * 1000
                                         ? {}
@@ -175,7 +175,7 @@ export const TripPanel = ({
     setForcedLines
 }: {
     trip: any;
-    setPanel: (panel: { type: any; data: any } | null) => void;
+    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const [fullTrip, setFullTrip] = useState<any>(null);
@@ -185,15 +185,15 @@ export const TripPanel = ({
         setFullTrip(trip);
         setForcedLines([trip.line.id]);
         return () => setForcedLines(null);
-    }, [trip]);
+    }, [trip?.line]);
 
     return (
         <Panel
-            title={"Trajet - Ligne " + (trip?.line?.shortName ?? fullTrip?.line.shortName)}
+            title={"Trajet - Ligne " + (trip?.line.shortName ?? fullTrip?.line.shortName)}
             open={trip}
             onClose={() => setPanel(null)}
         >
-            <button className="button" onClick={() => setPanel({ type: "line", data: trip?.line })}>
+            <button className="button" onClick={() => setPanel({ type: "line", id: trip?.line.id })}>
                 Voir la ligne
             </button>
         </Panel>
