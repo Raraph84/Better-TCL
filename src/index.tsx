@@ -27,7 +27,10 @@ const App = () => {
         bus: boolean;
         jd: boolean;
     }>({ met: true, fun: true, tra: true, trambus: true, navi: true, rx: true, bus: false, jd: false });
-    const [position, setPosition] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+    const [position, setPosition] = useState<{ lat: number; lng: number; accuracy: number; timestamp: number } | null>(
+        JSON.parse(localStorage.getItem("lastPosition") ?? "null")
+    );
+    const [positionPermission, setPositionPermission] = useState<boolean>(false);
 
     useEffect(() => {
         fetch(import.meta.env.VITE_SERVER_HOST + "/stops")
@@ -61,24 +64,47 @@ const App = () => {
         connect();
     }, []);
 
+    const onPositionUpdate = (pos: GeolocationPosition) => {
+        const newPosition = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            timestamp: pos.timestamp
+        };
+        setPosition(newPosition);
+        localStorage.setItem("lastPosition", JSON.stringify(newPosition));
+    };
+
     useEffect(() => {
-        const watchId = navigator.geolocation.watchPosition(
-            (pos) => {
-                setPosition({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    accuracy: pos.coords.accuracy
-                });
-            },
-            (err) => {},
-            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-        );
+        if (!positionPermission) {
+            navigator.permissions.query({ name: "geolocation" }).then((result) => {
+                if (result.state === "granted") setPositionPermission(true);
+            });
+            return;
+        }
+
+        console.log("Starting geolocation watch");
+        const watchId = navigator.geolocation.watchPosition(onPositionUpdate, () => {}, {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 10000
+        });
 
         return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
+    }, [positionPermission]);
 
     const handleLocate = () => {
-        if (position) mapRef.current!.flyTo([position.lat, position.lng], 16);
+        if (positionPermission && position && position.timestamp >= Date.now() - 60 * 1000)
+            mapRef.current!.flyTo([position.lat, position.lng], 16);
+        else
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    mapRef.current!.flyTo([pos.coords.latitude, pos.coords.longitude], 16);
+                    onPositionUpdate(pos);
+                    setPositionPermission(true);
+                },
+                () => {}
+            );
     };
 
     const visibleLines = linesGeojson?.filter((f: any) => {
@@ -130,7 +156,7 @@ const App = () => {
                     <CircleMarker
                         center={[position.lat, position.lng]}
                         fillOpacity={1}
-                        fillColor="#3333ff"
+                        fillColor={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
                         color="#ffffff"
                         radius={8}
                         weight={2}
