@@ -67,7 +67,7 @@ export const LinesLayer = ({
             data={{ type: "FeatureCollection", features: visibleFeatures } as any}
             style={(feature) => ({
                 color: feature?.properties.couleur_hex ?? "#ffffff",
-                weight: 3,
+                weight: feature?.properties.famille_transport === "MET" ? 4 : 2,
                 opacity: 0.9
             })}
             eventHandlers={{
@@ -87,12 +87,16 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
         vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
     ];
 
+    const map = useMap();
+    const [zoom, setZoom] = useState(() => map.getZoom());
     const [version, setVersion] = useState(0);
     const [position, setPosition] = useState<[number, number]>(target);
     const fromRef = useRef<[number, number]>(target);
     const targetRef = useRef<[number, number]>(target);
     const startRef = useRef<number>(0);
     const frameRef = useRef<number | null>(null);
+
+    useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
     useEffect(() => {
         const [targetLat, targetLon] = target;
@@ -127,7 +131,7 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
         <CircleMarker
             key={version}
             center={position}
-            radius={7}
+            radius={zoom < 13 ? 4 : 7}
             stroke={false}
             fillColor={color}
             fillOpacity={1}
@@ -174,13 +178,13 @@ export const StopsLayer = ({ stops, setPanel }: { stops: any[]; setPanel: (panel
     const visibleStops = stops.filter(
         (stop) => (view.zoom >= 17 ? stop.parent : !stop.parent) && view.bounds.contains([stop.lat, stop.lon])
     );
-    if (visibleStops.length > 250) return null;
+    if (visibleStops.length > 150) return null;
 
     return visibleStops.map((stop) => (
         <CircleMarker
             key={stop.id}
             center={[stop.lat, stop.lon]}
-            radius={5}
+            radius={view.zoom < 13 ? 3 : 5}
             color="white"
             eventHandlers={{ click: () => setPanel({ type: "stop", data: stop }) }}
         />

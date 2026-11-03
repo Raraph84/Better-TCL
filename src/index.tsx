@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Canvas } from "leaflet";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
@@ -81,6 +82,7 @@ const App = () => {
                 center={defaultLocation.center ?? [45.75, 4.85]}
                 zoom={defaultLocation.zoom ?? 13}
                 zoomControl={false}
+                renderer={new Canvas({ tolerance: 10 })}
             >
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/stamen_toner_dark/{z}/{x}/{y}{r}.png" /> 
                 <LocationSaver />

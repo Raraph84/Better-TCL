@@ -204,7 +204,10 @@ const formatTime = (time: Date) =>
     `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
 const LineBadge = ({ line }: { line: any }) => (
-    <span className="line-badge" style={{ backgroundColor: "#" + line.color, color: "#" + line.textColor }}>
+    <span
+        className="line-badge"
+        style={{ backgroundColor: "#" + line.color, color: "#" + (line.textColor || "FFFFFF") }}
+    >
         {line.shortName}
     </span>
 );
