@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Canvas } from "leaflet";
+import { Canvas, Map } from "leaflet";
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
@@ -10,6 +10,7 @@ import "leaflet/dist/leaflet.css";
 import "./index.scss";
 
 const App = () => {
+    const mapRef = useRef<Map>(null);
     const [stops, setStops] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
@@ -76,6 +77,10 @@ const App = () => {
         return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
+    const handleLocate = () => {
+        if (position) mapRef.current!.flyTo([position.lat, position.lng], 16);
+    };
+
     const visibleLines = linesGeojson?.filter((f: any) => {
         if (forcedLines) return forcedLines.includes(f.properties.code_ligne);
         if (filters.met && f.properties.famille_transport === "MET") return true;
@@ -93,6 +98,17 @@ const App = () => {
 
     const defaultLocation = JSON.parse(localStorage.getItem("location") ?? "{}");
 
+    const MapUpdater = () => {
+        const map = useMap();
+        mapRef.current = map;
+
+        const save = () =>
+            localStorage.setItem("location", JSON.stringify({ center: map.getCenter(), zoom: map.getZoom() }));
+        useMapEvents({ moveend: save, zoomend: save });
+
+        return null;
+    };
+
     return (
         <>
             <MapContainer
@@ -102,7 +118,6 @@ const App = () => {
                 renderer={new Canvas({ tolerance: 10 })}
             >
                 <TileLayer url={import.meta.env.VITE_TILES_HOST} /> 
-                <LocationSaver />
                 <LinesLayer features={visibleLines ?? []} lines={lines} setPanel={setPanel} />
                 <StopsLayer stops={stops ?? []} setPanel={setPanel} />
                 <VehiclesLayer
@@ -121,6 +136,7 @@ const App = () => {
                         weight={2}
                     />
                 )}
+                <MapUpdater />
             </MapContainer>
 
             <LinePanel
@@ -142,6 +158,9 @@ const App = () => {
             <div className="right-buttons">
                 <button onClick={() => setPanel({ type: "filters" })}>
                     <i className="fa-solid fa-filter" />
+                </button>
+                <button onClick={handleLocate}>
+                    <i className="fa-solid fa-location-dot" />
                 </button>
             </div>
 
@@ -168,14 +187,6 @@ const App = () => {
             </Panel>
         </>
     );
-};
-
-export const LocationSaver = () => {
-    const map = useMap();
-    const save = () =>
-        localStorage.setItem("location", JSON.stringify({ center: map.getCenter(), zoom: map.getZoom() }));
-    useMapEvents({ moveend: save, zoomend: save });
-    return null;
 };
 
 createRoot(document.getElementById("root")!).render(<App />);
