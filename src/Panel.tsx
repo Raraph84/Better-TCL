@@ -38,7 +38,7 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
 
     if (isMobile) {
         return (
-            <Sheet isOpen={open} onClose={onClose} detent="content">
+            <Sheet isOpen={open} onClose={onClose} detent="content" initialSnap={2} snapPoints={[80, 500, 1]}>
                 <Sheet.Container>
                     <Sheet.Content>
                         <div className="panel">{content}</div>

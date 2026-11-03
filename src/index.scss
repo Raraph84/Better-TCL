@@ -36,6 +36,7 @@ body {
 
 .panel {
     background-color: #1b3446;
+    min-height: 500px;
 
     &.panel-desktop {
         position: fixed;
