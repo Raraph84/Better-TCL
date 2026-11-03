@@ -106,19 +106,20 @@ app.get("/lines", (req, res) => {
 });
 
 const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = false) => {
-    let stops;
+    const stops = [];
     if (withStops) {
-        const stopMap: { [key: string]: any } = {};
+        const addedStops = new Set<string>();
         for (const trip of line.trips) {
+            const newStopTimes = [];
             for (const stopTime of trip.stopTimes) {
-                if (stopMap[trip.direction + "-" + stopTime.stopId]) continue;
-                stopMap[trip.direction + "-" + stopTime.stopId] = {
-                    ...getStop(gtfs!.stops[stopTime.stopId]!),
-                    direction: trip.direction
-                };
+                if (addedStops.has(trip.direction + "-" + stopTime.stopId)) continue;
+                addedStops.add(trip.direction + "-" + stopTime.stopId);
+                newStopTimes.push(stopTime);
             }
+            newStopTimes.sort((a, b) => a.sequence - b.sequence);
+            for (const stopTime of newStopTimes)
+                stops.push({ ...getStop(gtfs!.stops[stopTime.stopId]!), direction: trip.direction });
         }
-        stops = Object.values(stopMap);
     }
 
     let trips: any[] = [];
@@ -130,7 +131,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
         );
 
         for (const trip of computedTrips) {
-            const stops = gtfs!.trips[trip.trip.id]!.stopTimes;
+            const stops = gtfs!.trips[trip.trip.id]!.stopTimes.sort((a, b) => a.sequence - b.sequence);
             const arrivalTime = toDateTime(trip.date, stops.slice(-1)[0]!.departureTime).getTime();
             if (arrivalTime < Date.now() - 15 * 60 * 1000) continue;
             trips.push({
@@ -138,7 +139,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
                 serviceId: trip.service.id,
                 tripId: trip.trip.id,
                 direction: trip.trip.direction,
-                stops: gtfs!.trips[trip.trip.id]!.stopTimes.map((stopTime) => ({
+                stops: stops.map((stopTime) => ({
                     stopId: stopTime.stopId,
                     time: toDateTime(trip.date, stopTime.departureTime).getTime()
                 }))

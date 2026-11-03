@@ -80,7 +80,7 @@ export const parseGtfs = async (gtfs: Buffer) => {
         arrivalTime: stopTime[1]!,
         departureTime: stopTime[2]!,
         stopId: stopTime[3]!,
-        sequence: stopTime[4]!,
+        sequence: Number(stopTime[4]!),
         pickupType: stopTime[5]!,
         dropOffType: stopTime[6]!
     }));
@@ -180,7 +180,7 @@ export type StopTime = {
     arrivalTime: string;
     departureTime: string;
     stopId: string;
-    sequence: string;
+    sequence: number;
     pickupType: string;
     dropOffType: string;
 };
