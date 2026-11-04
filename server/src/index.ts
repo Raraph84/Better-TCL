@@ -129,7 +129,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
         for (const trip of computedTrips) {
             const stops = gtfs!.trips[trip.trip.id]!.stopTimes;
             const arrivalTime = toDateTime(trip.date, stops.slice(-1)[0]!.departureTime).getTime();
-            if (arrivalTime < Date.now() - 15 * 60 * 1000) continue;
+            if (arrivalTime < Date.now() - 10 * 60 * 1000) continue;
             trips.push({
                 serviceDate: trip.date.getTime(),
                 serviceId: trip.service.id,
@@ -143,7 +143,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
         }
 
         trips.sort((a, b) => a.stops[0]!.time - b.stops[0]!.time);
-        const minTrip = trips.findIndex((trip) => trip.stops[0]!.time >= Date.now() - 30 * 60 * 1000);
+        const minTrip = trips.findIndex((trip) => trip.stops[0]!.time >= Date.now() + 10 * 60 * 1000);
         trips = trips.slice(0, Math.max(minTrip, 10));
     }
 
