@@ -35,12 +35,10 @@ export const LinePanel = ({
                             new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
                             <div className="section-subtitle">Demain</div>
                         )}
-                        <button className="double" onClick={() => navigate("/trips/" + line.id)}>
+                        <button onClick={() => navigate("/trips/" + line.id)}>
                             <span>
-                                <div>Direction</div>
-                                <div>
-                                    {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
-                                </div>
+                                <LineBadge line={fullLine} />{" "}
+                                {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
                             </span>
                             <span style={{ whiteSpace: "nowrap" }}>
                                 {formatTime(new Date(trip.stops[0].time))} -{" "}
@@ -114,20 +112,16 @@ export const StopPanel = ({
 
             <div className="section-title">Lignes</div>
             <div className="lines">
-                {fullStop?.lines.map((line: any) => (
-                    <button key={line.id} onClick={() => navigate("/lines/" + line.id)} className="double">
-                        <span>
-                            Ligne <LineBadge line={line} />
-                        </span>
-                        <span>
-                            {line.directions.map((direction: any) => (
-                                <div key={direction}>
-                                    {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
-                                </div>
-                            ))}
-                        </span>
-                    </button>
-                ))}
+                {fullStop?.lines.map((line: any) =>
+                    line.directions.map((direction: any) => (
+                        <button key={line.id + "-" + direction} onClick={() => navigate("/lines/" + line.id)}>
+                            <span>
+                                <LineBadge line={line} />{" "}
+                                {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
+                            </span>
+                        </button>
+                    ))
+                )}
             </div>
 
             <div className="section-title">Passages</div>
@@ -155,10 +149,7 @@ export const StopPanel = ({
                                 }
                             >
                                 <span>
-                                    <div>
-                                        Ligne <LineBadge line={line} />
-                                    </div>
-                                    <div>Vers {directionStops.slice(-1)[0].name}</div>
+                                    <LineBadge line={line} /> {directionStops.slice(-1)[0].name}
                                 </span>
                                 <span>{formatTime(new Date(nextStop.time))}</span>
                             </button>
