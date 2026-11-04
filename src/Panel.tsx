@@ -23,6 +23,7 @@ const useIsMobile = () => {
 export const Panel = ({ title, open, onClose, children }: PanelProps) => {
     const isMobile = useIsMobile();
     const [panelHeight, setPanelHeight] = useState<number>(0);
+    const [grabbed, setGrabbed] = useState<boolean>(false);
     const panelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -37,10 +38,15 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
             setPanelHeight(height);
         };
 
+        let grabbed = false;
+        const updateGrabbed = (value: boolean) => {
+            grabbed = value;
+            setGrabbed(value);
+        };
+
         const presets = [0, header.clientHeight, window.innerHeight * 0.4, window.innerHeight * 0.95];
         updatePanelHeight(presets[2]!);
 
-        let grabbed = false;
         let lastY = 0;
         let lastTime = 0;
         let velocity = 0;
@@ -68,7 +74,7 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
 
         const handleTouchStart = (event: TouchEvent) => {
             cancelAnimationFrame(rafId);
-            grabbed = true;
+            updateGrabbed(true);
             lastY = event.touches[0]!.clientY;
             lastTime = event.timeStamp;
             velocity = 0;
@@ -94,15 +100,17 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
         };
         const handleTouchEnd = (event: TouchEvent) => {
             if (!grabbed) return;
-            grabbed = false;
+            updateGrabbed(false);
 
             if (
                 panelHeight !== presets[presets.length - 1] ||
                 content.scrollHeight === content.clientHeight ||
                 !content.contains(event.target as Node)
             ) {
+                let projected = panelHeight + velocity * 325;
+                if (panelHeight >= presets[1]! && projected < presets[1]!) projected = presets[1]!;
                 const closestPreset = presets.reduce((prev, curr) =>
-                    Math.abs(curr - panelHeight) < Math.abs(prev - panelHeight) ? curr : prev
+                    Math.abs(curr - projected) < Math.abs(prev - projected) ? curr : prev
                 );
                 updatePanelHeight(closestPreset);
                 if (closestPreset === 0) onClose();
@@ -123,7 +131,7 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
         <div
             ref={panelRef}
             className={`panel ${isMobile ? "panel-mobile" : "panel-desktop"}${open ? " panel-open" : ""}`}
-            style={isMobile ? { height: panelHeight } : {}}
+            style={isMobile ? { height: open ? panelHeight : 0, transition: grabbed ? "" : "height 0.3s ease" } : {}}
         >
             <div className="panel-header">
                 <h2 className="panel-title">{title}</h2>
