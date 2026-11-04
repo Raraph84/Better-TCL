@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CircleMarker, GeoJSON, useMap, useMapEvents } from "react-leaflet";
 
 const collectCoordinates = (coords: any, out: [number, number][]) => {
@@ -31,15 +32,8 @@ const getFeatureBounds = (feature: any): [[number, number], [number, number]] =>
     ];
 };
 
-export const LinesLayer = ({
-    features,
-    lines,
-    setPanel
-}: {
-    features: any[];
-    lines: any;
-    setPanel: (panel: { type: any; id?: number } | null) => void;
-}) => {
+export const LinesLayer = ({ features, lines }: { features: any[]; lines: any }) => {
+    const navigate = useNavigate();
     const map = useMap();
     const [view, setView] = useState(() => map.getBounds());
     const [version, setVersion] = useState(0);
@@ -71,7 +65,7 @@ export const LinesLayer = ({
                 opacity: 0.9
             })}
             eventHandlers={{
-                click: (event) => setPanel({ type: "line", id: event.sourceTarget.feature.properties.code_ligne })
+                click: (event) => navigate("/lines/" + event.sourceTarget.feature.properties.code_ligne)
             }}
         />
     );
@@ -139,14 +133,13 @@ const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: strin
 export const VehiclesLayer = ({
     lines,
     forcedLines,
-    vehicles,
-    setPanel
+    vehicles
 }: {
     lines: any;
     forcedLines: string[] | null;
     vehicles: { [key: string]: any };
-    setPanel: (panel: { type: any; id?: number } | null) => void;
 }) => {
+    const navigate = useNavigate();
     return vehicles.map((vehicle: any) => {
         const lineId = vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "");
         if (forcedLines && !forcedLines.includes(lineId)) return null;
@@ -156,19 +149,14 @@ export const VehiclesLayer = ({
                 key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
                 vehicle={vehicle}
                 color={line ? `#${line.color}` : "#aaaaaa"}
-                onClick={() => setPanel({ type: "trip", id: line.id })}
+                onClick={() => navigate("/trips/" + lineId)}
             />
         );
     });
 };
 
-export const StopsLayer = ({
-    stops,
-    setPanel
-}: {
-    stops: any[];
-    setPanel: (panel: { type: any; id?: number } | null) => void;
-}) => {
+export const StopsLayer = ({ stops }: { stops: any[] }) => {
+    const navigate = useNavigate();
     const map = useMap();
     const [view, setView] = useState(() => ({ bounds: map.getBounds(), zoom: map.getZoom() }));
 
@@ -188,7 +176,7 @@ export const StopsLayer = ({
             center={[stop.lat, stop.lon]}
             radius={view.zoom < 13 ? 3 : 5}
             color="white"
-            eventHandlers={{ click: () => setPanel({ type: "stop", id: stop.id }) }}
+            eventHandlers={{ click: () => navigate("/stops/" + stop.id) }}
         />
     ));
 };

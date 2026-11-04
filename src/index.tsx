@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Canvas, Map } from "leaflet";
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
@@ -10,11 +11,14 @@ import "leaflet/dist/leaflet.css";
 import "./index.scss";
 
 const App = () => {
+    const { pathname } = useLocation();
+    const params = useParams();
+    const navigate = useNavigate();
+
     const mapRef = useRef<Map>(null);
     const [stops, setStops] = useState<any>(null);
     const [lines, setLines] = useState<any>(null);
     const [linesGeojson, setLinesGeojson] = useState<any>(null);
-    const [panel, setPanel] = useState<{ type: "filters" | "line" | "stop" | "trip"; id?: number } | null>(null);
     const [forcedLines, setForcedLines] = useState<string[] | null>(null);
     const [trackedVehicles, setTrackedVehicles] = useState<{ [key: string]: any }>({});
     const [filters, setFilters] = useState<{
@@ -144,13 +148,12 @@ const App = () => {
                 renderer={new Canvas({ tolerance: 10 })}
             >
                 <TileLayer url={import.meta.env.VITE_TILES_HOST} /> 
-                <LinesLayer features={visibleLines ?? []} lines={lines} setPanel={setPanel} />
-                <StopsLayer stops={stops ?? []} setPanel={setPanel} />
+                <LinesLayer features={visibleLines ?? []} lines={lines} />
+                <StopsLayer stops={stops ?? []} />
                 <VehiclesLayer
                     lines={lines ?? []}
                     forcedLines={forcedLines}
                     vehicles={Object.values(trackedVehicles)}
-                    setPanel={setPanel}
                 />
                 {position && (
                     <CircleMarker
@@ -167,23 +170,20 @@ const App = () => {
             </MapContainer>
 
             <LinePanel
-                line={panel?.type === "line" ? lines.find((line: any) => line.id === panel.id) : null}
-                setPanel={setPanel}
+                line={lines?.find((line: any) => line.id === params.lineId) || null}
                 setForcedLines={setForcedLines}
             />
             <StopPanel
-                stop={panel?.type === "stop" ? stops.find((stop: any) => stop.id === panel.id) : null}
-                setPanel={setPanel}
+                stop={stops?.find((stop: any) => stop.id === params.stopId) || null}
                 setForcedLines={setForcedLines}
             />
             <TripPanel
-                trip={panel?.type === "trip" ? { line: lines.find((line: any) => line.id === panel.id) } : null}
-                setPanel={setPanel}
+                trip={params.tripId && lines ? { line: lines.find((line: any) => line.id === params.tripId) } : null}
                 setForcedLines={setForcedLines}
             />
 
             <div className="right-buttons">
-                <button onClick={() => setPanel({ type: "filters" })}>
+                <button onClick={() => navigate("/filters")}>
                     <i className="fa-solid fa-filter" />
                 </button>
                 <button onClick={handleLocate}>
@@ -191,7 +191,7 @@ const App = () => {
                 </button>
             </div>
 
-            <Panel title="Filtres" open={panel?.type === "filters"} onClose={() => setPanel(null)}>
+            <Panel title="Filtres" open={pathname === "/filters"} onClose={() => navigate("/")}>
                 {[
                     { name: "Métro", key: "met" },
                     { name: "Funiculaire", key: "fun" },
@@ -216,4 +216,16 @@ const App = () => {
     );
 };
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+    <BrowserRouter>
+        <Routes>
+            <Route element={<App />}>
+                <Route path="/" />
+                <Route path="/filters" />
+                <Route path="/lines/:lineId" />
+                <Route path="/stops/:stopId" />
+                <Route path="/trips/:tripId" />
+            </Route>
+        </Routes>
+    </BrowserRouter>
+);

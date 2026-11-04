@@ -1,15 +1,15 @@
 import { Fragment, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Panel } from "./Panel.js";
 
 export const LinePanel = ({
     line,
-    setPanel,
     setForcedLines
 }: {
     line: any;
-    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
+    const navigate = useNavigate();
     const [fullLine, setFullLine] = useState<any>(null);
     const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
 
@@ -26,7 +26,7 @@ export const LinePanel = ({
     const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
 
     return (
-        <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => setPanel(null)}>
+        <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => navigate("/")}>
             <div className="section-title">Trajets</div>
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
@@ -35,7 +35,7 @@ export const LinePanel = ({
                             new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
                             <div className="section-subtitle">Demain</div>
                         )}
-                        <button className="double" onClick={() => setPanel({ type: "trip", id: line.id })}>
+                        <button className="double" onClick={() => navigate("/trips/" + line.id)}>
                             <span>
                                 <div>Direction</div>
                                 <div>
@@ -65,7 +65,7 @@ export const LinePanel = ({
             </button>
             <div className="stops">
                 {stops?.map((stop: any) => (
-                    <button key={stop.id} className="stop" onClick={() => setPanel({ type: "stop", id: stop.id })}>
+                    <button key={stop.id} className="stop" onClick={() => navigate("/stops/" + stop.id)}>
                         {stop.name}
                     </button>
                 ))}
@@ -78,13 +78,12 @@ export const LinePanel = ({
 
 export const StopPanel = ({
     stop,
-    setPanel,
     setForcedLines
 }: {
     stop: any;
-    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
+    const navigate = useNavigate();
     const [fullStop, setFullStop] = useState<any>(null);
     const [showPreviousStops, setShowPreviousStops] = useState(false);
 
@@ -106,9 +105,9 @@ export const StopPanel = ({
     );
 
     return (
-        <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
+        <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => navigate("/")}>
             {fullStop?.parent && (
-                <button className="button" onClick={() => setPanel({ type: "stop", id: fullStop.parent })}>
+                <button className="button" onClick={() => navigate("/stops/" + fullStop.parent)}>
                     Voir l'arrêt parent
                 </button>
             )}
@@ -116,7 +115,7 @@ export const StopPanel = ({
             <div className="section-title">Lignes</div>
             <div className="lines">
                 {fullStop?.lines.map((line: any) => (
-                    <button key={line.id} onClick={() => setPanel({ type: "line", id: line.id })} className="double">
+                    <button key={line.id} onClick={() => navigate("/lines/" + line.id)} className="double">
                         <span>
                             Ligne <LineBadge line={line} />
                         </span>
@@ -148,7 +147,7 @@ export const StopPanel = ({
                                 <div className="section-subtitle">Demain</div>
                             )}
                             <button
-                                onClick={() => setPanel({ type: "trip", id: line.id })}
+                                onClick={() => navigate("/trips/" + line.id)}
                                 style={
                                     nextStop.time >= Date.now() - 60 * 1000
                                         ? {}
@@ -175,13 +174,12 @@ export const StopPanel = ({
 
 export const TripPanel = ({
     trip,
-    setPanel,
     setForcedLines
 }: {
     trip: any;
-    setPanel: (panel: { type: any; id?: number } | null) => void;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
+    const navigate = useNavigate();
     const [fullTrip, setFullTrip] = useState<any>(null);
 
     useEffect(() => {
@@ -195,9 +193,9 @@ export const TripPanel = ({
         <Panel
             title={"Trajet - Ligne " + (trip?.line.shortName ?? fullTrip?.line.shortName)}
             open={trip}
-            onClose={() => setPanel(null)}
+            onClose={() => navigate("/")}
         >
-            <button className="button" onClick={() => setPanel({ type: "line", id: trip?.line.id })}>
+            <button className="button" onClick={() => navigate("/lines/" + trip?.line.id)}>
                 Voir la ligne
             </button>
         </Panel>
