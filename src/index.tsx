@@ -154,6 +154,7 @@ const App = () => {
                 />
                 {position && (
                     <CircleMarker
+                        key={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
                         center={[position.lat, position.lng]}
                         fillOpacity={1}
                         fillColor={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}

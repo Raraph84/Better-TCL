@@ -233,7 +233,7 @@ const getStop = (stop: Stop, withLines: boolean = false, withNextStops: boolean 
         id: stop.id,
         name: stop.name,
         zone: stop.zoneId,
-        parent: stop.parentStation ? getStop(gtfs!.stops[stop.parentStation]!) : null,
+        parent: stop.parentStation,
         lat: stop.latitude,
         lon: stop.longitude,
         ...(withLines ? { lines } : {}),

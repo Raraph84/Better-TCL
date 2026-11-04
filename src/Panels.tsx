@@ -106,7 +106,7 @@ export const StopPanel = ({
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => setPanel(null)}>
             {fullStop?.parent && (
-                <button className="button" onClick={() => setPanel({ type: "stop", id: fullStop.parent.id })}>
+                <button className="button" onClick={() => setPanel({ type: "stop", id: fullStop.parent })}>
                     Voir l'arrêt parent
                 </button>
             )}
