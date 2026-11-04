@@ -110,15 +110,11 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
     if (withStops) {
         const addedStops = new Set<string>();
         for (const trip of line.trips) {
-            const newStopTimes = [];
-            for (const stopTime of trip.stopTimes) {
+            for (const stopTime of trip.stopTimes.sort((a, b) => a.sequence - b.sequence)) {
                 if (addedStops.has(trip.direction + "-" + stopTime.stopId)) continue;
                 addedStops.add(trip.direction + "-" + stopTime.stopId);
-                newStopTimes.push(stopTime);
-            }
-            newStopTimes.sort((a, b) => a.sequence - b.sequence);
-            for (const stopTime of newStopTimes)
                 stops.push({ ...getStop(gtfs!.stops[stopTime.stopId]!), direction: trip.direction });
+            }
         }
     }
 
@@ -131,7 +127,7 @@ const getLine = (line: Line, withStops: boolean = false, withTrips: boolean = fa
         );
 
         for (const trip of computedTrips) {
-            const stops = gtfs!.trips[trip.trip.id]!.stopTimes.sort((a, b) => a.sequence - b.sequence);
+            const stops = gtfs!.trips[trip.trip.id]!.stopTimes;
             const arrivalTime = toDateTime(trip.date, stops.slice(-1)[0]!.departureTime).getTime();
             if (arrivalTime < Date.now() - 15 * 60 * 1000) continue;
             trips.push({
@@ -211,12 +207,14 @@ const getStop = (stop: Stop, withLines: boolean = false, withNextStops: boolean 
                     if (!stops.some((stop) => stop.id === stopTime.stopId)) continue;
                     const time = toDateTime(trip.date, stopTime.departureTime).getTime();
                     if (time < Date.now() - 15 * 60 * 1000) continue;
+                    const stopTimes = [...gtfs!.trips[trip.trip.id]!.stopTimes].sort((a, b) => a.sequence - b.sequence);
                     nextStops.push({
                         lineId: line.id,
                         serviceDate: trip.date.getTime(),
                         serviceId: trip.service.id,
                         tripId: trip.trip.id,
                         direction: trip.trip.direction,
+                        directionStop: getStop(gtfs!.stops[stopTimes.slice(-1)[0]!.stopId]!),
                         stopId: stopTime.stopId,
                         time
                     });

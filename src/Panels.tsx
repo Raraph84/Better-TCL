@@ -131,31 +131,28 @@ export const StopPanel = ({
                 </button>
             )}
             <div className="next-stops">
-                {nextStops?.map((nextStop: any, i: number) => {
-                    const line = fullStop.lines.find((line: any) => line.id === nextStop.lineId);
-                    const directionStops = line.stops.filter((stop: any) => stop.direction === nextStop.direction);
-                    return (
-                        <Fragment key={i}>
-                            {new Date(nextStop.time).getDate() !==
-                                new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
-                                <div className="section-subtitle">Demain</div>
-                            )}
-                            <button
-                                onClick={() => navigate("/trips/" + line.id)}
-                                style={
-                                    nextStop.time >= Date.now() - 60 * 1000
-                                        ? {}
-                                        : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
-                                }
-                            >
-                                <span>
-                                    <LineBadge line={line} /> {directionStops.slice(-1)[0].name}
-                                </span>
-                                <span>{formatTime(new Date(nextStop.time))}</span>
-                            </button>
-                        </Fragment>
-                    );
-                })}
+                {nextStops?.map((nextStop: any, i: number) => (
+                    <Fragment key={i}>
+                        {new Date(nextStop.time).getDate() !==
+                            new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
+                            <div className="section-subtitle">Demain</div>
+                        )}
+                        <button
+                            onClick={() => navigate("/trips/" + nextStop.lineId)}
+                            style={
+                                nextStop.time >= Date.now() - 60 * 1000
+                                    ? {}
+                                    : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
+                            }
+                        >
+                            <span>
+                                <LineBadge line={fullStop.lines.find((line: any) => line.id === nextStop.lineId)} />{" "}
+                                {nextStop.directionStop.name}
+                            </span>
+                            <span>{formatTime(new Date(nextStop.time))}</span>
+                        </button>
+                    </Fragment>
+                ))}
             </div>
 
             <div>Identifiant d'arrêt: {fullStop?.id}</div>
