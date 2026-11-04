@@ -130,7 +130,7 @@ export const StopPanel = ({
             </div>
 
             <div className="section-title">Passages</div>
-            {fullStop?.nextStops.some((stop: any) => stop.time < Date.now()) && (
+            {fullStop?.nextStops.some((stop: any) => stop.time < Date.now() - 60 * 1000) && (
                 <button className="button" onClick={() => setShowPreviousStops(!showPreviousStops)}>
                     {showPreviousStops ? "Masquer les passages précédents" : "Afficher les passages précédents"}
                 </button>

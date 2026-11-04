@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type PanelProps = {
     title: string;
@@ -22,9 +22,74 @@ const useIsMobile = () => {
 
 export const Panel = ({ title, open, onClose, children }: PanelProps) => {
     const isMobile = useIsMobile();
+    const [panelHeight, setPanelHeight] = useState<number>(0);
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isMobile || !open) return;
+
+        const header = panelRef.current?.querySelector(".panel-header")!;
+        const content = panelRef.current?.querySelector(".panel-content")!;
+
+        let panelHeight = 0;
+        const updatePanelHeight = (height: number) => {
+            panelHeight = height;
+            setPanelHeight(height);
+        };
+
+        const presets = [0, header.clientHeight, window.innerHeight * 0.4, window.innerHeight * 0.95];
+        updatePanelHeight(presets[2]!);
+
+        let grabbed = false;
+        let lastY = 0;
+
+        const handleTouchStart = (event: TouchEvent) => {
+            grabbed = true;
+            lastY = event.touches[0]!.clientY;
+        };
+        const handleTouchMove = (event: TouchEvent) => {
+            if (!grabbed) return;
+
+            const deltaY = lastY - event.touches[0]!.clientY;
+            lastY = event.touches[0]!.clientY;
+
+            event.preventDefault();
+            if (
+                panelHeight !== presets[presets.length - 1] ||
+                content.scrollHeight === content.clientHeight ||
+                !content.contains(event.target as Node) ||
+                (deltaY < 0 && content.scrollTop === 0)
+            )
+                updatePanelHeight(Math.min(panelHeight + deltaY, presets[presets.length - 1]!));
+            else content.scrollTop += deltaY;
+        };
+        const handleTouchEnd = (event: TouchEvent) => {
+            if (!grabbed) return;
+            grabbed = false;
+
+            const closestPreset = presets.reduce((prev, curr) =>
+                Math.abs(curr - panelHeight) < Math.abs(prev - panelHeight) ? curr : prev
+            );
+            updatePanelHeight(closestPreset);
+            if (closestPreset === 0) onClose();
+        };
+
+        panelRef.current?.addEventListener("touchstart", handleTouchStart);
+        panelRef.current?.addEventListener("touchmove", handleTouchMove);
+        panelRef.current?.addEventListener("touchend", handleTouchEnd);
+        return () => {
+            panelRef.current?.removeEventListener("touchstart", handleTouchStart);
+            panelRef.current?.removeEventListener("touchmove", handleTouchMove);
+            panelRef.current?.removeEventListener("touchend", handleTouchEnd);
+        };
+    }, [isMobile, open, title]);
 
     return (
-        <div className={`panel ${isMobile ? "panel-mobile" : "panel-desktop"}${open ? " panel-open" : ""}`}>
+        <div
+            ref={panelRef}
+            className={`panel ${isMobile ? "panel-mobile" : "panel-desktop"}${open ? " panel-open" : ""}`}
+            style={isMobile ? { height: panelHeight } : {}}
+        >
             <div className="panel-header">
                 <h2 className="panel-title">{title}</h2>
                 <button className="panel-close" onClick={onClose} aria-label="Fermer le panel">
