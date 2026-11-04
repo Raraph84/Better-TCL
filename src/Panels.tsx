@@ -23,6 +23,7 @@ export const LinePanel = ({
         return () => setForcedLines(null);
     }, [line]);
 
+    const hasInbound = fullLine?.stops.some((stop: any) => stop.direction === "inbound");
     const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
 
     return (
@@ -52,6 +53,7 @@ export const LinePanel = ({
             <div className="section-title">Arrêts</div>
             <button
                 className="button direction"
+                disabled={!hasInbound}
                 onClick={() => setDirection(direction === "outbound" ? "inbound" : "outbound")}
             >
                 <span>
@@ -59,7 +61,7 @@ export const LinePanel = ({
                     <br />
                     {stops?.[stops.length - 1].name}
                 </span>
-                <i className="fa-solid fa-repeat" />
+                {hasInbound && <i className="fa-solid fa-repeat" />}
             </button>
             <div className="stops">
                 {stops?.map((stop: any) => (
