@@ -70,6 +70,8 @@ export const LinePanel = ({
                     </button>
                 ))}
             </div>
+
+            <div>Identifiant de ligne: {fullLine?.id}</div>
         </Panel>
     );
 };
@@ -165,6 +167,8 @@ export const StopPanel = ({
                     );
                 })}
             </div>
+
+            <div>Identifiant d'arrêt: {fullStop?.id}</div>
         </Panel>
     );
 };

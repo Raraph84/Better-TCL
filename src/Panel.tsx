@@ -42,16 +42,45 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
 
         let grabbed = false;
         let lastY = 0;
+        let lastTime = 0;
+        let velocity = 0;
+        let rafId = 0;
+
+        const startInertia = (initialVelocity: number) => {
+            let v = initialVelocity;
+            let pos = content.scrollTop;
+            const max = content.scrollHeight - content.clientHeight;
+            let last = performance.now();
+
+            const step = (now: number) => {
+                const dt = now - last;
+                last = now;
+
+                pos = Math.min(Math.max(pos + v * dt, 0), max);
+                content.scrollTop = pos;
+                v *= Math.exp(-dt / 325);
+
+                if (Math.abs(v) < 0.02 || pos === 0 || pos === max) return;
+                rafId = requestAnimationFrame(step);
+            };
+            rafId = requestAnimationFrame(step);
+        };
 
         const handleTouchStart = (event: TouchEvent) => {
+            cancelAnimationFrame(rafId);
             grabbed = true;
             lastY = event.touches[0]!.clientY;
+            lastTime = event.timeStamp;
+            velocity = 0;
         };
         const handleTouchMove = (event: TouchEvent) => {
             if (!grabbed) return;
 
             const deltaY = lastY - event.touches[0]!.clientY;
+            const deltaTime = event.timeStamp - lastTime;
             lastY = event.touches[0]!.clientY;
+            lastTime = event.timeStamp;
+            velocity = 0.8 * (deltaY / deltaTime) + 0.2 * velocity;
 
             event.preventDefault();
             if (
@@ -67,11 +96,17 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
             if (!grabbed) return;
             grabbed = false;
 
-            const closestPreset = presets.reduce((prev, curr) =>
-                Math.abs(curr - panelHeight) < Math.abs(prev - panelHeight) ? curr : prev
-            );
-            updatePanelHeight(closestPreset);
-            if (closestPreset === 0) onClose();
+            if (
+                panelHeight !== presets[presets.length - 1] ||
+                content.scrollHeight === content.clientHeight ||
+                !content.contains(event.target as Node)
+            ) {
+                const closestPreset = presets.reduce((prev, curr) =>
+                    Math.abs(curr - panelHeight) < Math.abs(prev - panelHeight) ? curr : prev
+                );
+                updatePanelHeight(closestPreset);
+                if (closestPreset === 0) onClose();
+            } else startInertia(velocity);
         };
 
         panelRef.current?.addEventListener("touchstart", handleTouchStart);
