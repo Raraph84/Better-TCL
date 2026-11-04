@@ -181,7 +181,8 @@ const getStop = (stop: Stop, withLines: boolean = false, withNextStops: boolean 
                 if (!linesMap[trip.lineId])
                     linesMap[trip.lineId] = {
                         ...getLine(gtfs!.lines[trip.lineId]!, true),
-                        directions: [trip.direction]
+                        directions: [trip.direction],
+                        nextStops: []
                     };
                 else if (!linesMap[trip.lineId].directions.includes(trip.direction))
                     linesMap[trip.lineId].directions.push(trip.direction);
@@ -223,6 +224,14 @@ const getStop = (stop: Stop, withLines: boolean = false, withNextStops: boolean 
         }
 
         nextStops.sort((a, b) => a.time - b.time);
+
+        for (const nextStop of nextStops) {
+            if (nextStop.time < Date.now() - 60 * 1000) continue;
+            const line = lines!.find((line) => line.id === nextStop.lineId);
+            if (line.nextStops.filter((s: any) => s.direction === nextStop.direction).length >= 2) continue;
+            line.nextStops.push(nextStop);
+        }
+
         const minNextStop = nextStops.findIndex((nextStop) => nextStop.time >= Date.now() + 30 * 60 * 1000);
         nextStops = nextStops.slice(0, Math.max(minNextStop, 25));
     }

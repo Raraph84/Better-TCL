@@ -121,6 +121,13 @@ export const StopPanel = ({
                                 <LineBadge line={line} />{" "}
                                 {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
                             </span>
+                            <span>
+                                {line.nextStops
+                                    .filter((s: any) => s.direction === direction)
+                                    .map((s: any) => formatTime(new Date(s.time)))
+                                    .slice(0, 2)
+                                    .join(" ")}
+                            </span>
                         </button>
                     ))
                 )}
