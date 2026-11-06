@@ -1,8 +1,11 @@
 export const parseISO8601Duration = (duration: string) => {
-    if (!duration) return 0;
-    const matches = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!duration) return null;
+    const matches = duration.match(/^(-)?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
     if (!matches) throw new Error("Invalid ISO 8601 duration format: " + duration);
-    return parseInt(matches[1] || "0") * 60 + parseInt(matches[2] || "0");
+    return (
+        ((parseInt(matches[2] || "0") * 60 + parseInt(matches[3] || "0")) * 60 + parseInt(matches[4] || "0")) *
+        (matches[1] ? -1 : 1)
+    );
 };
 
 export const toDate = (d: string): Date =>

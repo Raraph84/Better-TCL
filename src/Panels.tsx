@@ -171,9 +171,11 @@ export const StopPanel = ({
 
 export const TripPanel = ({
     tripId,
+    trackedVehicles,
     setForcedLines
 }: {
     tripId: string | null;
+    trackedVehicles: { [key: string]: any };
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const navigate = useNavigate();
@@ -182,14 +184,20 @@ export const TripPanel = ({
     useEffect(() => {
         if (!tripId) return;
         setFullTrip(null);
+        setForcedLines([]);
         fetch(import.meta.env.VITE_SERVER_HOST + "/trips/" + tripId)
-            .then((res) => res.json())
+            .then((res) => (res.ok ? res.json() : null))
             .then((res) => {
                 setFullTrip(res);
-                setForcedLines([res.line.id]);
+                setForcedLines(res ? [res.line.id] : null);
             });
         return () => setForcedLines(null);
     }, [tripId]);
+
+    const vehicle = Object.values(trackedVehicles).find((v) => v.fullTripId === fullTrip?.fullTripId) ?? null;
+    const delayed = Math.abs(vehicle?.delay ?? 0) > 60;
+    const delayColor = !delayed ? "#50FF50" : vehicle?.delay > 0 ? "#FF5050" : "#5050FF";
+    console.log(fullTrip?.stops.slice(-1)[0].time - (vehicle?.delay ?? 0) * 1000);
 
     return (
         <Panel
@@ -197,10 +205,6 @@ export const TripPanel = ({
             open={tripId && fullTrip}
             onClose={() => navigate("/")}
         >
-            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
-                Voir la ligne
-            </button>
-
             {fullTrip && (
                 <div className="trips">
                     <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
@@ -215,22 +219,47 @@ export const TripPanel = ({
                 </div>
             )}
 
+            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
+                Voir la ligne
+            </button>
+
+            {vehicle && (
+                <div style={{ color: delayColor }}>
+                    {!delayed ? "À l'heure" : vehicle.delay > 0 ? "En retard" : "En avance"}
+                    {delayed && ` de ${Math.floor(Math.abs(vehicle.delay) / 60)}m${Math.abs(vehicle.delay) % 60}s`}
+                </div>
+            )}
+
             <div className="section-title">Arrêts</div>
             <div className="stops">
-                {fullTrip?.stops.map((stopTime: any, i: number) => (
+                {fullTrip?.stops.map((stopTime: any) => (
                     <button
+                        key={stopTime.stop.id}
                         onClick={() => navigate("/stops/" + stopTime.stop.id)}
                         style={
-                            stopTime.time >= Date.now() - 60 * 1000
+                            stopTime.time + (vehicle?.delay ?? 0) * 1000 >= Date.now() - 60 * 1000
                                 ? {}
                                 : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
                         }
                     >
                         <span>{stopTime.stop.name}</span>
-                        <span>{formatTime(new Date(stopTime.time))}</span>
+                        <span>
+                            {delayed ? (
+                                <>
+                                    <s>{formatTime(new Date(stopTime.time))}</s>{" "}
+                                    <span style={{ color: delayColor }}>
+                                        {formatTime(new Date(stopTime.time + vehicle.delay * 1000))}
+                                    </span>
+                                </>
+                            ) : (
+                                formatTime(new Date(stopTime.time))
+                            )}
+                        </span>
                     </button>
                 ))}
             </div>
+
+            {vehicle && <div>Identifiant de véhicule: {vehicle.id}</div>}
         </Panel>
     );
 };
