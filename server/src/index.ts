@@ -6,6 +6,7 @@ import cors from "cors";
 import { WebSocketServer } from "ws";
 import { parseGtfs } from "./gtfs.js";
 import { getLine, getStop } from "./processing.js";
+import { parseISO8601Duration, toDate } from "./utils.js";
 
 dotenv.config({ quiet: true });
 
@@ -114,18 +115,37 @@ setInterval(async () => {
         return;
     }
     const data: any = await res.json();
-    const vehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery?.[0].VehicleActivity ?? [];
+    const rawVehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery?.[0].VehicleActivity ?? [];
+    const vehicles = (rawVehicles as any[]).map((vehicle) => ({
+        id: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
+        lineId: vehicle.MonitoredVehicleJourney.LineRef.value.split(":")[3],
+        serviceDate: toDate(
+            vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef.value.split(":")[3].replace(/\./g, "")
+        ).getTime(),
+        tripId: vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3],
+        direction: vehicle.MonitoredVehicleJourney.DirectionRef.value,
+        directionStopId: vehicle.MonitoredVehicleJourney.DestinationRef.value.split(":")[3],
+        latitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
+        longitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude,
+        lastStopId: vehicle.MonitoredVehicleJourney.MonitoredCall.StopPointRef.value.split(":")[3],
+        lastStopSequence: vehicle.MonitoredVehicleJourney.MonitoredCall.Order,
+        delay: parseISO8601Duration(vehicle.MonitoredVehicleJourney.Delay),
+        time: new Date(vehicle.RecordedAtTime).getTime()
+    }));
+
     for (const trackedVehicleKey in trackedVehicles) {
-        if (vehicles.some((vehicle: any) => vehicle.MonitoredVehicleJourney.VehicleRef.value === trackedVehicleKey))
-            continue;
+        if (vehicles.some((vehicle) => vehicle.id === trackedVehicleKey)) continue;
         delete trackedVehicles[trackedVehicleKey];
     }
     for (const vehicle of vehicles) {
-        const key = vehicle.MonitoredVehicleJourney.VehicleRef.value;
-        if (trackedVehicles[key]?.RecordedAtTime === vehicle.RecordedAtTime) continue;
-        trackedVehicles[key] = vehicle;
+        if (trackedVehicles[vehicle.id]?.time === vehicle.time) continue;
+        trackedVehicles[vehicle.id] = vehicle;
         for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
     }
 }, 2000);
+
+app.get("/vehicles", (req, res) => {
+    res.json({ vehicles: Object.values(trackedVehicles) });
+});
 
 server.listen(4000, () => console.log("Server is running on http://localhost:4000"));

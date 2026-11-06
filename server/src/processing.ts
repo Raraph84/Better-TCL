@@ -1,4 +1,5 @@
-import { toDateTime, type Gtfs, type Line, type Stop, type Trip } from "./gtfs.js";
+import { type Gtfs, type Line, type Stop, type Trip } from "./gtfs.js";
+import { toDateTime } from "./utils.js";
 
 const computeServices = (gtfs: Gtfs, trips: Trip[], startDate: number, endDate: number) => {
     const services = new Set(trips.map((trip) => gtfs.services[trip.serviceId]!));

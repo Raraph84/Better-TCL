@@ -72,10 +72,7 @@ export const LinesLayer = ({ features, lines }: { features: any[]; lines: any })
 };
 
 const VehicleMarker = ({ vehicle, color, onClick }: { vehicle: any; color: string; onClick: () => void }) => {
-    const target: [number, number] = [
-        vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
-    ];
+    const target: [number, number] = [vehicle.latitude, vehicle.longitude];
 
     const map = useMap();
     const [zoom, setZoom] = useState(() => map.getZoom());
@@ -137,19 +134,18 @@ export const VehiclesLayer = ({
 }: {
     lines: any;
     forcedLines: string[] | null;
-    vehicles: { [key: string]: any };
+    vehicles: any[];
 }) => {
     const navigate = useNavigate();
-    return vehicles.map((vehicle: any) => {
-        const lineId = vehicle.MonitoredVehicleJourney.LineRef.value.replace("ActIV:Line::", "").replace(":SYTRAL", "");
-        if (forcedLines && !forcedLines.includes(lineId)) return null;
-        const line = lines.find((line: any) => line.id === lineId);
+    return vehicles.map((vehicle) => {
+        if (forcedLines && !forcedLines.includes(vehicle.lineId)) return null;
+        const line = lines.find((line: any) => line.id === vehicle.lineId);
         return (
             <VehicleMarker
-                key={vehicle.MonitoredVehicleJourney.VehicleRef.value}
+                key={vehicle.id}
                 vehicle={vehicle}
-                color={line ? `#${line.color}` : "#aaaaaa"}
-                onClick={() => navigate("/trips/" + lineId)}
+                color={`#${line?.color ?? "aaaaaa"}`}
+                onClick={() => navigate("/trips/" + vehicle.lineId)}
             />
         );
     });

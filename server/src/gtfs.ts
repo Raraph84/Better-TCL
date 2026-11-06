@@ -1,4 +1,5 @@
 import unzipper from "unzipper";
+import { toDate } from "./utils.js";
 
 const parse = async (zip: unzipper.CentralDirectory, filename: string) =>
     (await zip.files.find((file) => file.path === filename)!.buffer())
@@ -7,17 +8,6 @@ const parse = async (zip: unzipper.CentralDirectory, filename: string) =>
         .slice(1)
         .filter((l) => l.length)
         .map((l) => l.split(","));
-
-const toDate = (d: string): Date => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
-export const toDateTime = (date: Date, t: string): Date =>
-    new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        Number(t.slice(0, 2)),
-        Number(t.slice(3, 5)),
-        Number(t.slice(6, 8))
-    );
 
 const pickValue = <T>(obj: { [key: string]: T }, key: string): T => {
     if (!(key in obj)) throw new Error("Invalid value for " + key);

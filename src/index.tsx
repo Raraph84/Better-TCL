@@ -55,10 +55,7 @@ const App = () => {
             ws.addEventListener("message", (event) => {
                 const message = JSON.parse(event.data);
                 if (message.event === "vehicle")
-                    setTrackedVehicles((prev) => ({
-                        ...prev,
-                        [message.data.MonitoredVehicleJourney.VehicleRef.value]: message.data
-                    }));
+                    setTrackedVehicles((prev) => ({ ...prev, [message.data.id]: message.data }));
             });
             ws.addEventListener("close", (event) => {
                 console.log("WebSocket closed, reconnecting...", event.code, event.reason);
