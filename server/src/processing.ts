@@ -66,8 +66,8 @@ export const getLine = (gtfs: Gtfs, line: Line, withStops: boolean = false, with
             const arrivalTime = toDateTime(trip.date, stops.slice(-1)[0]!.departureTime).getTime();
             if (arrivalTime < Date.now() - 10 * 60 * 1000) continue;
             trips.push({
+                fullTripId: Buffer.from(trip.date.getTime() + "-" + trip.trip.id).toString("base64url"),
                 serviceDate: trip.date.getTime(),
-                serviceId: trip.service.id,
                 tripId: trip.trip.id,
                 direction: trip.trip.direction,
                 stops: stops.map((stopTime) => ({
@@ -136,8 +136,8 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
                     const stopTimes = [...gtfs.trips[trip.trip.id]!.stopTimes].sort((a, b) => a.sequence - b.sequence);
                     nextStops.push({
                         lineId: line.id,
+                        fullTripId: Buffer.from(trip.date.getTime() + "-" + trip.trip.id).toString("base64url"),
                         serviceDate: trip.date.getTime(),
-                        serviceId: trip.service.id,
                         tripId: trip.trip.id,
                         direction: trip.trip.direction,
                         directionStop: getStop(gtfs, gtfs.stops[stopTimes.slice(-1)[0]!.stopId]!),
@@ -170,5 +170,24 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
         lon: stop.longitude,
         ...(withLines ? { lines } : {}),
         ...(withNextStops ? { nextStops } : {})
+    };
+};
+
+export const getTrip = (gtfs: Gtfs, fullTripId: string) => {
+    const fullTripIdSplit = Buffer.from(fullTripId, "base64url").toString().split("-");
+    const serviceDate = new Date(fullTripIdSplit[0]!);
+    const trip = gtfs.trips[fullTripIdSplit.slice(1).join("-")];
+    if (!trip) return null;
+
+    return {
+        line: getLine(gtfs, gtfs.lines[trip.lineId]!),
+        fullTripId: Buffer.from(serviceDate.getTime() + "-" + trip.id).toString("base64url"),
+        serviceDate: serviceDate.getTime(),
+        tripId: trip.id,
+        direction: trip.direction,
+        stops: trip.stopTimes.map((stopTime) => ({
+            stop: getStop(gtfs, gtfs.stops[stopTime.stopId]!),
+            time: toDateTime(serviceDate, stopTime.departureTime).getTime()
+        }))
     };
 };

@@ -36,7 +36,7 @@ export const LinePanel = ({
                             new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
                             <div className="section-subtitle">Demain</div>
                         )}
-                        <button onClick={() => navigate("/trips/" + line.id)}>
+                        <button onClick={() => navigate("/trips/" + trip.fullTripId)}>
                             <span>
                                 <LineBadge line={fullLine} />{" "}
                                 {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
@@ -147,7 +147,7 @@ export const StopPanel = ({
                             <div className="section-subtitle">Demain</div>
                         )}
                         <button
-                            onClick={() => navigate("/trips/" + nextStop.lineId)}
+                            onClick={() => navigate("/trips/" + nextStop.fullTripId)}
                             style={
                                 nextStop.time >= Date.now() - 60 * 1000
                                     ? {}
@@ -170,29 +170,34 @@ export const StopPanel = ({
 };
 
 export const TripPanel = ({
-    trip,
+    tripId,
     setForcedLines
 }: {
-    trip: any;
+    tripId: string | null;
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const navigate = useNavigate();
     const [fullTrip, setFullTrip] = useState<any>(null);
 
     useEffect(() => {
-        if (!trip) return;
-        setFullTrip(trip);
-        setForcedLines([trip.line.id]);
+        if (!tripId) return;
+        setFullTrip(null);
+        fetch(import.meta.env.VITE_SERVER_HOST + "/trips/" + tripId)
+            .then((res) => res.json())
+            .then((res) => {
+                setFullTrip(res);
+                setForcedLines([res.line.id]);
+            });
         return () => setForcedLines(null);
-    }, [trip?.line]);
+    }, [tripId]);
 
     return (
         <Panel
-            title={"Trajet - Ligne " + (trip?.line.shortName ?? fullTrip?.line.shortName)}
-            open={trip}
+            title={"Trajet - Ligne " + fullTrip?.line.shortName}
+            open={tripId && fullTrip}
             onClose={() => navigate("/")}
         >
-            <button className="button" onClick={() => navigate("/lines/" + trip?.line.id)}>
+            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
                 Voir la ligne
             </button>
         </Panel>

@@ -174,10 +174,7 @@ const App = () => {
                 stop={stops?.find((stop: any) => stop.id === params.stopId) || null}
                 setForcedLines={setForcedLines}
             />
-            <TripPanel
-                trip={params.tripId && lines ? { line: lines.find((line: any) => line.id === params.tripId) } : null}
-                setForcedLines={setForcedLines}
-            />
+            <TripPanel tripId={params.tripId ?? null} setForcedLines={setForcedLines} />
 
             <div className="right-buttons">
                 <button onClick={() => navigate("/filters")}>

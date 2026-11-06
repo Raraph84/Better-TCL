@@ -145,7 +145,7 @@ export const VehiclesLayer = ({
                 key={vehicle.id}
                 vehicle={vehicle}
                 color={`#${line?.color ?? "aaaaaa"}`}
-                onClick={() => navigate("/trips/" + vehicle.lineId)}
+                onClick={() => navigate("/trips/" + vehicle.fullTripId)}
             />
         );
     });

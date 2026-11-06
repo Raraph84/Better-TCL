@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
 import { parseGtfs } from "./gtfs.js";
-import { getLine, getStop } from "./processing.js";
+import { getLine, getStop, getTrip } from "./processing.js";
 import { parseISO8601Duration, toDate } from "./utils.js";
 
 dotenv.config({ quiet: true });
@@ -85,6 +85,12 @@ app.get("/stops/:id", (req, res) => {
     res.json(getStop(gtfs!, stop, true, true));
 });
 
+app.get("/trips/:id", (req, res) => {
+    const trip = getTrip(gtfs!, req.params.id);
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    res.json(trip);
+});
+
 const server = http.createServer(app);
 
 const trackingWss = new WebSocketServer({ noServer: true });
@@ -116,22 +122,26 @@ setInterval(async () => {
     }
     const data: any = await res.json();
     const rawVehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery?.[0].VehicleActivity ?? [];
-    const vehicles = (rawVehicles as any[]).map((vehicle) => ({
-        id: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
-        lineId: vehicle.MonitoredVehicleJourney.LineRef.value.split(":")[3],
-        serviceDate: toDate(
-            vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef.value.split(":")[3].replace(/\./g, "")
-        ).getTime(),
-        tripId: vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3],
-        direction: vehicle.MonitoredVehicleJourney.DirectionRef.value,
-        directionStopId: vehicle.MonitoredVehicleJourney.DestinationRef.value.split(":")[3],
-        latitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        longitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude,
-        lastStopId: vehicle.MonitoredVehicleJourney.MonitoredCall.StopPointRef.value.split(":")[3],
-        lastStopSequence: vehicle.MonitoredVehicleJourney.MonitoredCall.Order,
-        delay: parseISO8601Duration(vehicle.MonitoredVehicleJourney.Delay),
-        time: new Date(vehicle.RecordedAtTime).getTime()
-    }));
+    const vehicles = (rawVehicles as any[]).map((vehicle) => {
+        const rawServiceDate = vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef.value.split(":")[3];
+        const serviceDate = toDate(rawServiceDate.replace(/\./g, "")).getTime();
+        const tripId = vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3];
+        return {
+            id: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
+            lineId: vehicle.MonitoredVehicleJourney.LineRef.value.split(":")[3],
+            fullTripId: Buffer.from(serviceDate + "-" + tripId).toString("base64url"),
+            serviceDate: serviceDate,
+            tripId: tripId,
+            direction: vehicle.MonitoredVehicleJourney.DirectionRef.value,
+            directionStopId: vehicle.MonitoredVehicleJourney.DestinationRef.value.split(":")[3],
+            latitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
+            longitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude,
+            lastStopId: vehicle.MonitoredVehicleJourney.MonitoredCall.StopPointRef.value.split(":")[3],
+            lastStopSequence: vehicle.MonitoredVehicleJourney.MonitoredCall.Order,
+            delay: parseISO8601Duration(vehicle.MonitoredVehicleJourney.Delay),
+            time: new Date(vehicle.RecordedAtTime).getTime()
+        };
+    });
 
     for (const trackedVehicleKey in trackedVehicles) {
         if (vehicles.some((vehicle) => vehicle.id === trackedVehicleKey)) continue;
