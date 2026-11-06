@@ -24,7 +24,7 @@ const pickValue = <T>(obj: { [key: string]: T }, key: string): T => {
     return obj[key]!;
 };
 
-export const parseGtfs = async (gtfs: Buffer) => {
+export const parseGtfs = async (gtfs: Buffer): Promise<Gtfs> => {
     const zip = await unzipper.Open.buffer(gtfs);
 
     const services: { [key: string]: Service } = {};
@@ -199,4 +199,13 @@ export type Stop = {
     latitude: number;
     longitude: number;
     stopTimes: StopTime[];
+};
+
+export type Gtfs = {
+    services: { [key: string]: Service };
+    serviceExceptions: ServiceException[];
+    lines: { [key: string]: Line };
+    stopTimes: StopTime[];
+    stops: { [key: string]: Stop };
+    trips: { [key: string]: Trip };
 };
