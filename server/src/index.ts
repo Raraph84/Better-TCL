@@ -281,11 +281,17 @@ setInterval(async () => {
         });
         if (!res.ok) throw new Error("Error from Grand Lyon API: " + res.status + " " + res.statusText);
     } catch (error) {
-        console.error("Failed to fetch vehicle monitoring data");
+        console.error("Failed to fetch vehicle monitoring data " + error);
         return;
     }
     const data: any = await res.json();
-    for (const vehicle of data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity) {
+    const vehicles = data.Siri.ServiceDelivery.VehicleMonitoringDelivery?.[0].VehicleActivity ?? [];
+    for (const trackedVehicleKey in trackedVehicles) {
+        if (vehicles.some((vehicle: any) => vehicle.MonitoredVehicleJourney.VehicleRef.value === trackedVehicleKey))
+            continue;
+        delete trackedVehicles[trackedVehicleKey];
+    }
+    for (const vehicle of vehicles) {
         const key = vehicle.MonitoredVehicleJourney.VehicleRef.value;
         if (trackedVehicles[key]?.RecordedAtTime === vehicle.RecordedAtTime) continue;
         trackedVehicles[key] = vehicle;
