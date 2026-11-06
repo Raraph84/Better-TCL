@@ -175,7 +175,7 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
 
 export const getTrip = (gtfs: Gtfs, fullTripId: string) => {
     const fullTripIdSplit = Buffer.from(fullTripId, "base64url").toString().split("-");
-    const serviceDate = new Date(fullTripIdSplit[0]!);
+    const serviceDate = new Date(Number(fullTripIdSplit[0]));
     const trip = gtfs.trips[fullTripIdSplit.slice(1).join("-")];
     if (!trip) return null;
 

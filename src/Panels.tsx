@@ -200,6 +200,37 @@ export const TripPanel = ({
             <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
                 Voir la ligne
             </button>
+
+            {fullTrip && (
+                <div className="trips">
+                    <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
+                        <span>
+                            <LineBadge line={fullTrip.line} /> {fullTrip.stops.slice(-1)[0].stop.name}
+                        </span>
+                        <span style={{ whiteSpace: "nowrap" }}>
+                            {formatTime(new Date(fullTrip.stops[0].time))} -{" "}
+                            {formatTime(new Date(fullTrip.stops.slice(-1)[0].time))}
+                        </span>
+                    </button>
+                </div>
+            )}
+
+            <div className="section-title">Arrêts</div>
+            <div className="stops">
+                {fullTrip?.stops.map((stopTime: any, i: number) => (
+                    <button
+                        onClick={() => navigate("/stops/" + stopTime.stop.id)}
+                        style={
+                            stopTime.time >= Date.now() - 60 * 1000
+                                ? {}
+                                : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
+                        }
+                    >
+                        <span>{stopTime.stop.name}</span>
+                        <span>{formatTime(new Date(stopTime.time))}</span>
+                    </button>
+                ))}
+            </div>
         </Panel>
     );
 };

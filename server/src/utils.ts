@@ -1,4 +1,5 @@
 export const parseISO8601Duration = (duration: string) => {
+    if (!duration) return 0;
     const matches = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
     if (!matches) throw new Error("Invalid ISO 8601 duration format: " + duration);
     return parseInt(matches[1] || "0") * 60 + parseInt(matches[2] || "0");
