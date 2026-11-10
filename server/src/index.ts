@@ -152,7 +152,7 @@ setInterval(async () => {
         trackedVehicles[vehicle.id] = vehicle;
         for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
     }
-}, 2000);
+}, 10_000);
 
 app.get("/vehicles", (req, res) => {
     res.json({ vehicles: Object.values(trackedVehicles) });
