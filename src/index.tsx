@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Canvas, Map } from "leaflet";
-import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Pane, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
 import { Panel } from "./Panel.js";
@@ -144,25 +144,31 @@ const App = () => {
                 zoomControl={false}
                 renderer={new Canvas({ tolerance: 10 })}
             >
-                <TileLayer url={import.meta.env.VITE_TILES_HOST} /> 
-                <LinesLayer features={visibleLines ?? []} lines={lines} />
-                <StopsLayer stops={stops ?? []} />
-                <VehiclesLayer
-                    lines={lines ?? []}
-                    forcedLines={forcedLines}
-                    vehicles={Object.values(trackedVehicles)}
-                />
-                {position && (
-                    <CircleMarker
-                        key={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
-                        center={[position.lat, position.lng]}
-                        fillOpacity={1}
-                        fillColor={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
-                        color="#ffffff"
-                        radius={8}
-                        weight={2}
+                <TileLayer url={import.meta.env.VITE_TILES_HOST} />
+                <Pane name="lines" style={{ zIndex: 410 }}>
+                    <LinesLayer features={visibleLines ?? []} lines={lines} />
+                </Pane>
+                <Pane name="stops" style={{ zIndex: 420 }}>
+                    <StopsLayer stops={stops ?? []} />
+                </Pane>
+                <Pane name="vehicles" style={{ zIndex: 430 }}>
+                    <VehiclesLayer
+                        lines={lines ?? []}
+                        forcedLines={forcedLines}
+                        vehicles={Object.values(trackedVehicles)}
                     />
-                )}
+                    {position && (
+                        <CircleMarker
+                            key={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
+                            center={[position.lat, position.lng]}
+                            fillOpacity={1}
+                            fillColor={position.timestamp > Date.now() - 60 * 1000 ? "#3333ff" : "#cccccc"}
+                            color="#ffffff"
+                            radius={8}
+                            weight={2}
+                        />
+                    )}
+                </Pane>
                 <MapUpdater />
             </MapContainer>
 
