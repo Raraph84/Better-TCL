@@ -207,14 +207,15 @@ const App = () => {
                     { name: "Bus", key: "bus" },
                     { name: "Bus scolaires", key: "jd" }
                 ].map(({ name, key }) => (
-                    <div key={key}>
+                    <label key={key} className="filter">
+                        <span>{name}</span>
                         <input
                             type="checkbox"
+                            className="toggle"
                             checked={filters[key as keyof typeof filters]}
                             onChange={(e) => setFilters({ ...filters, [key]: e.target.checked })}
                         />
-                        <div>{name}</div>
-                    </div>
+                    </label>
                 ))}
             </Panel>
         </>
