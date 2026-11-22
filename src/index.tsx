@@ -6,6 +6,7 @@ import { CircleMarker, MapContainer, Pane, TileLayer, useMap, useMapEvents } fro
 import { LinesLayer, StopsLayer, VehiclesLayer } from "./MapLayers.js";
 import { LinePanel, StopPanel, TripPanel } from "./Panels.js";
 import { Panel } from "./Panel.js";
+import { SearchBar } from "./SearchBar.js";
 
 import "leaflet/dist/leaflet.css";
 import "./index.scss";
@@ -172,6 +173,8 @@ const App = () => {
                 </Pane>
                 <MapUpdater />
             </MapContainer>
+
+            <SearchBar stops={stops} />
 
             <LinePanel
                 line={lines?.find((line: any) => line.id === params.lineId) || null}
