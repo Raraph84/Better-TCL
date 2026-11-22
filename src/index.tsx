@@ -80,6 +80,7 @@ const App = () => {
         if (!positionPermission) {
             navigator.permissions.query({ name: "geolocation" }).then((result) => {
                 if (result.state === "granted") setPositionPermission(true);
+                else setPosition(null);
             });
             return;
         }
@@ -195,7 +196,7 @@ const App = () => {
                 </button>
             </div>
 
-            <Panel title="Filtres" open={pathname === "/filters"} onClose={() => navigate("/")}>
+            <Panel title="Filtres" open={pathname === "/filters"}>
                 {[
                     { name: "Métro", key: "met" },
                     { name: "Funiculaire", key: "fun" },

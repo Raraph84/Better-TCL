@@ -27,7 +27,7 @@ export const LinePanel = ({
     const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
 
     return (
-        <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName)} open={line} onClose={() => navigate("/")}>
+        <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName ?? "")} open={line}>
             <div className="section-title">Trajets</div>
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
@@ -105,7 +105,7 @@ export const StopPanel = ({
     );
 
     return (
-        <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name)} open={stop} onClose={() => navigate("/")}>
+        <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name ?? "")} open={stop}>
             {fullStop?.parent && (
                 <button className="button" onClick={() => navigate("/stops/" + fullStop.parent)}>
                     Voir l'arrêt parent
@@ -197,14 +197,13 @@ export const TripPanel = ({
     const vehicle = Object.values(trackedVehicles).find((v) => v.fullTripId === fullTrip?.fullTripId) ?? null;
     const delayed = Math.abs(vehicle?.delay ?? 0) > 60;
     const delayColor = !delayed ? "#50FF50" : vehicle?.delay > 0 ? "#FF5050" : "#5050FF";
-    console.log(fullTrip?.stops.slice(-1)[0].time - (vehicle?.delay ?? 0) * 1000);
 
     return (
-        <Panel
-            title={"Trajet - Ligne " + fullTrip?.line.shortName}
-            open={tripId && fullTrip}
-            onClose={() => navigate("/")}
-        >
+        <Panel title={"Trajet - Ligne " + (fullTrip?.line.shortName ?? "")} open={tripId && fullTrip}>
+            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
+                Voir la ligne
+            </button>
+
             {fullTrip && (
                 <div className="trips">
                     <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
@@ -218,10 +217,6 @@ export const TripPanel = ({
                     </button>
                 </div>
             )}
-
-            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
-                Voir la ligne
-            </button>
 
             {vehicle && (
                 <div style={{ color: delayColor }}>

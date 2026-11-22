@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 type PanelProps = {
     title: string;
     open: boolean;
-    onClose: () => void;
     children?: ReactNode;
 };
 
@@ -20,7 +20,8 @@ const useIsMobile = () => {
     return isMobile;
 };
 
-export const Panel = ({ title, open, onClose, children }: PanelProps) => {
+export const Panel = ({ title, open, children }: PanelProps) => {
+    const navigate = useNavigate();
     const isMobile = useIsMobile();
     const [panelHeight, setPanelHeight] = useState<number>(0);
     const [grabbed, setGrabbed] = useState<boolean>(false);
@@ -44,7 +45,7 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
             setGrabbed(value);
         };
 
-        const presets = [0, header.clientHeight, window.innerHeight * 0.4, window.innerHeight * 0.95];
+        const presets = [0, header.clientHeight, window.innerHeight * 0.5, window.innerHeight * 0.95];
         updatePanelHeight(presets[2]!);
 
         let lastY = 0;
@@ -113,7 +114,7 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
                     Math.abs(curr - projected) < Math.abs(prev - projected) ? curr : prev
                 );
                 updatePanelHeight(closestPreset);
-                if (closestPreset === 0) onClose();
+                if (closestPreset === 0) navigate("/");
             } else startInertia(velocity);
         };
 
@@ -135,8 +136,8 @@ export const Panel = ({ title, open, onClose, children }: PanelProps) => {
         >
             <div className="panel-header">
                 <h2 className="panel-title">{title}</h2>
-                <button className="panel-close" onClick={onClose} aria-label="Fermer le panel">
-                    ✕
+                <button onClick={() => navigate("/")}>
+                    <i className="fa-solid fa-xmark" />
                 </button>
             </div>
             <div className="panel-content">{children}</div>

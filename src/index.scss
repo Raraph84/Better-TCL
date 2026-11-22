@@ -63,7 +63,7 @@ body {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 8px;
         padding: 16px 20px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
@@ -72,19 +72,12 @@ body {
             font-weight: 600;
         }
 
-        .panel-close {
+        button {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 28px;
             height: 28px;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: background-color 0.2s ease;
-
-            &:hover {
-                background-color: rgba(255, 255, 255, 0.12);
-            }
         }
     }
 
