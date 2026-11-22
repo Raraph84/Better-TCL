@@ -18,7 +18,7 @@ export const LinePanel = ({
         if (!line) return;
         setFullLine(null);
         setForcedLines([line.id]);
-        fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + line.id)
+        fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + line.id + "?date=" + date)
             .then((res) => res.json())
             .then((res) => setFullLine(res));
         return () => setForcedLines(null);
@@ -33,6 +33,11 @@ export const LinePanel = ({
                 <button onClick={() => setDate(Date.now())}>
                     <i className="fa-solid fa-rotate-right" />
                 </button>
+                <input
+                    type="datetime-local"
+                    value={new Date(date - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                    onChange={(event) => setDate(new Date(event.target.value).getTime() || date)}
+                />
             </div>
 
             <div className="section-title">Trajets</div>
@@ -105,7 +110,7 @@ export const StopPanel = ({
         if (!stop) return;
         setFullStop(null);
         setForcedLines([]);
-        fetch(import.meta.env.VITE_SERVER_HOST + "/stops/" + stop.id)
+        fetch(import.meta.env.VITE_SERVER_HOST + "/stops/" + stop.id + "?date=" + date)
             .then((res) => res.json())
             .then((res) => {
                 setFullStop(res);
@@ -124,6 +129,11 @@ export const StopPanel = ({
                 <button onClick={() => setDate(Date.now())}>
                     <i className="fa-solid fa-rotate-right" />
                 </button>
+                <input
+                    type="datetime-local"
+                    value={new Date(date - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                    onChange={(event) => setDate(new Date(event.target.value).getTime() || date)}
+                />
                 {fullStop?.parent && (
                     <button className="button" onClick={() => navigate("/stops/" + fullStop.parent)}>
                         Voir l'arrêt parent

@@ -6,7 +6,8 @@
     box-sizing: border-box;
 }
 
-button {
+button,
+input[type="datetime-local"] {
     background: transparent;
     border: none;
     font: inherit;
@@ -108,7 +109,8 @@ body {
                 padding: 0 8px;
             }
 
-            .button {
+            .button,
+            input {
                 width: max-content;
                 padding: 6px 12px;
                 border-radius: 12px;

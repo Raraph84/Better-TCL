@@ -72,7 +72,7 @@ app.get("/lines", (req, res) => {
 app.get("/lines/:id", (req, res) => {
     const line = gtfs!.lines[req.params.id];
     if (!line) return res.status(404).json({ error: "Line not found" });
-    res.json(getLine(gtfs!, line, true, true));
+    res.json(getLine(gtfs!, line, true, true, Number(req.query.date) || Date.now()));
 });
 
 app.get("/stops", (req, res) => {
@@ -82,7 +82,7 @@ app.get("/stops", (req, res) => {
 app.get("/stops/:id", (req, res) => {
     const stop = gtfs!.stops[req.params.id];
     if (!stop) return res.status(404).json({ error: "Stop not found" });
-    res.json(getStop(gtfs!, stop, true, true));
+    res.json(getStop(gtfs!, stop, true, true, Number(req.query.date) || Date.now()));
 });
 
 app.get("/trips/:id", (req, res) => {
