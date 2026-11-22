@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export const SearchBar = ({ stops }: { stops: any[] | null }) => {
+export const SearchBar = ({ stops, onSelect }: { stops: any[] | null; onSelect: (stop: any) => void }) => {
     const navigate = useNavigate();
     const [query, setQuery] = useState("");
     const [focused, setFocused] = useState(false);
@@ -24,7 +24,9 @@ export const SearchBar = ({ stops }: { stops: any[] | null }) => {
     const select = (stop: any) => {
         setQuery("");
         setFocused(false);
-        if (stop) navigate("/stops/" + stop.id);
+        if (!stop) return;
+        onSelect(stop);
+        navigate("/stops/" + stop.id);
     };
 
     return (

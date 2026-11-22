@@ -98,7 +98,7 @@ const App = () => {
 
     const handleLocate = () => {
         if (positionPermission && position && position.timestamp >= Date.now() - 60 * 1000)
-            mapRef.current!.flyTo([position.lat, position.lng], 16);
+            mapRef.current!.flyTo([position.lat, position.lng], 16, { duration: 1 });
         else
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -174,7 +174,10 @@ const App = () => {
                 <MapUpdater />
             </MapContainer>
 
-            <SearchBar stops={stops} />
+            <SearchBar
+                stops={stops}
+                onSelect={(stop) => mapRef.current?.flyTo([stop.lat, stop.lon], 16, { duration: 1 })}
+            />
 
             <LinePanel
                 line={lines?.find((line: any) => line.id === params.lineId) || null}
