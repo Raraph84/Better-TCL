@@ -39,7 +39,13 @@ const computeTrips = (gtfs: Gtfs, line: Line, startDate: number, endDate: number
     return computedTrips;
 };
 
-export const getLine = (gtfs: Gtfs, line: Line, withStops: boolean = false, withTrips: boolean = false) => {
+export const getLine = (
+    gtfs: Gtfs,
+    line: Line,
+    withStops: boolean = false,
+    withTrips: boolean = false,
+    date = Date.now()
+) => {
     const stops = [];
     if (withStops) {
         const addedStops = new Set<string>();
@@ -54,17 +60,12 @@ export const getLine = (gtfs: Gtfs, line: Line, withStops: boolean = false, with
 
     let trips: any[] = [];
     if (withTrips) {
-        const computedTrips = computeTrips(
-            gtfs,
-            line,
-            Date.now() - 2 * 24 * 60 * 60 * 1000,
-            Date.now() + 24 * 60 * 60 * 1000
-        );
+        const computedTrips = computeTrips(gtfs, line, date - 2 * 24 * 60 * 60 * 1000, date + 24 * 60 * 60 * 1000);
 
         for (const trip of computedTrips) {
             const stops = gtfs.trips[trip.trip.id]!.stopTimes;
             const arrivalTime = toDateTime(trip.date, stops.slice(-1)[0]!.departureTime).getTime();
-            if (arrivalTime < Date.now() - 10 * 60 * 1000) continue;
+            if (arrivalTime < date - 10 * 60 * 1000) continue;
             trips.push({
                 fullTripId: Buffer.from(trip.date.getTime() + "-" + trip.trip.id).toString("base64url"),
                 serviceDate: trip.date.getTime(),
@@ -78,7 +79,7 @@ export const getLine = (gtfs: Gtfs, line: Line, withStops: boolean = false, with
         }
 
         trips.sort((a, b) => a.stops[0]!.time - b.stops[0]!.time);
-        const minTrip = trips.findIndex((trip) => trip.stops[0]!.time >= Date.now() + 10 * 60 * 1000);
+        const minTrip = trips.findIndex((trip) => trip.stops[0]!.time >= date + 10 * 60 * 1000);
         trips = trips.slice(0, Math.max(minTrip, 10));
     }
 
@@ -93,7 +94,13 @@ export const getLine = (gtfs: Gtfs, line: Line, withStops: boolean = false, with
     };
 };
 
-export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, withNextStops: boolean = false): any => {
+export const getStop = (
+    gtfs: Gtfs,
+    stop: Stop,
+    withLines: boolean = false,
+    withNextStops: boolean = false,
+    date = Date.now()
+): any => {
     let lines;
     if (withLines || withNextStops) {
         const stops = [stop, ...Object.values(gtfs.stops).filter((s) => s.parentStation === stop.id)];
@@ -104,7 +111,7 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
                 const trip = gtfs.trips[stopTime.tripId]!;
                 if (!linesMap[trip.lineId])
                     linesMap[trip.lineId] = {
-                        ...getLine(gtfs, gtfs.lines[trip.lineId]!, true),
+                        ...getLine(gtfs, gtfs.lines[trip.lineId]!, true, false, date),
                         directions: [trip.direction],
                         nextStops: []
                     };
@@ -124,15 +131,15 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
             const computedTrips = computeTrips(
                 gtfs,
                 gtfs.lines[line.id]!,
-                Date.now() - 2 * 24 * 60 * 60 * 1000,
-                Date.now() + 24 * 60 * 60 * 1000
+                date - 2 * 24 * 60 * 60 * 1000,
+                date + 24 * 60 * 60 * 1000
             );
 
             for (const trip of computedTrips) {
                 for (const stopTime of gtfs.trips[trip.trip.id]!.stopTimes) {
                     if (!stops.some((stop) => stop.id === stopTime.stopId)) continue;
                     const time = toDateTime(trip.date, stopTime.departureTime).getTime();
-                    if (time < Date.now() - 15 * 60 * 1000) continue;
+                    if (time < date - 15 * 60 * 1000) continue;
                     const stopTimes = [...gtfs.trips[trip.trip.id]!.stopTimes].sort((a, b) => a.sequence - b.sequence);
                     nextStops.push({
                         lineId: line.id,
@@ -151,13 +158,13 @@ export const getStop = (gtfs: Gtfs, stop: Stop, withLines: boolean = false, with
         nextStops.sort((a, b) => a.time - b.time);
 
         for (const nextStop of nextStops) {
-            if (nextStop.time < Date.now() - 60 * 1000) continue;
+            if (nextStop.time < date - 60 * 1000) continue;
             const line = lines!.find((line) => line.id === nextStop.lineId);
             if (line.nextStops.filter((s: any) => s.direction === nextStop.direction).length >= 2) continue;
             line.nextStops.push(nextStop);
         }
 
-        const minNextStop = nextStops.findIndex((nextStop) => nextStop.time >= Date.now() + 30 * 60 * 1000);
+        const minNextStop = nextStops.findIndex((nextStop) => nextStop.time >= date + 30 * 60 * 1000);
         nextStops = nextStops.slice(0, Math.max(minNextStop, 25));
     }
 

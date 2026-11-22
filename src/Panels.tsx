@@ -39,9 +39,15 @@ export const LinePanel = ({
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
                     <Fragment key={i}>
-                        {new Date(trip.stops[0].time).getDate() !==
-                            new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now()).getDate() && (
-                            <div className="section-subtitle">Demain</div>
+                        {!isSameDay(
+                            new Date(trip.stops[0].time),
+                            new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now())
+                        ) && (
+                            <div className="section-subtitle">
+                                {isTomorrow(new Date(trip.stops[0].time))
+                                    ? "Demain"
+                                    : formatDate(new Date(trip.stops[0].time))}
+                            </div>
                         )}
                         <button onClick={() => navigate("/trips/" + trip.fullTripId)}>
                             <span>
@@ -155,9 +161,10 @@ export const StopPanel = ({
             <div className="next-stops">
                 {nextStops?.map((nextStop: any, i: number) => (
                     <Fragment key={i}>
-                        {new Date(nextStop.time).getDate() !==
-                            new Date(nextStops[i - 1]?.time ?? Date.now()).getDate() && (
-                            <div className="section-subtitle">Demain</div>
+                        {!isSameDay(new Date(nextStop.time), new Date(nextStops[i - 1]?.time ?? Date.now())) && (
+                            <div className="section-subtitle">
+                                {isTomorrow(new Date(nextStop.time)) ? "Demain" : formatDate(new Date(nextStop.time))}
+                            </div>
                         )}
                         <button
                             onClick={() => navigate("/trips/" + nextStop.fullTripId)}
@@ -280,6 +287,21 @@ export const TripPanel = ({
 
 const formatTime = (time: Date) =>
     `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+
+const formatDate = (date: Date) =>
+    `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+        .getFullYear()
+        .toString()
+        .padStart(4, "0")}`;
+
+const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+
+const isTomorrow = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return isSameDay(date, tomorrow);
+};
 
 const LineBadge = ({ line }: { line: any }) => (
     <span
