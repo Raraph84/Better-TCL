@@ -11,6 +11,7 @@ export const LinePanel = ({
 }) => {
     const navigate = useNavigate();
     const [fullLine, setFullLine] = useState<any>(null);
+    const [date, setDate] = useState(Date.now());
     const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
 
     useEffect(() => {
@@ -21,13 +22,19 @@ export const LinePanel = ({
             .then((res) => res.json())
             .then((res) => setFullLine(res));
         return () => setForcedLines(null);
-    }, [line]);
+    }, [line, date]);
 
     const hasInbound = fullLine?.stops.some((stop: any) => stop.direction === "inbound");
     const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
 
     return (
         <Panel title={"Ligne " + (fullLine?.shortName ?? line?.shortName ?? "")} open={line}>
+            <div className="controls">
+                <button onClick={() => setDate(Date.now())}>
+                    <i className="fa-solid fa-rotate-right" />
+                </button>
+            </div>
+
             <div className="section-title">Trajets</div>
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
@@ -85,6 +92,7 @@ export const StopPanel = ({
 }) => {
     const navigate = useNavigate();
     const [fullStop, setFullStop] = useState<any>(null);
+    const [date, setDate] = useState(Date.now());
     const [showPreviousStops, setShowPreviousStops] = useState(false);
 
     useEffect(() => {
@@ -98,7 +106,7 @@ export const StopPanel = ({
                 setForcedLines(res.lines.map((line: any) => line.id));
             });
         return () => setForcedLines(null);
-    }, [stop]);
+    }, [stop, date]);
 
     const nextStops = fullStop?.nextStops.filter(
         (stop: any) => showPreviousStops || stop.time >= Date.now() - 60 * 1000
@@ -106,11 +114,16 @@ export const StopPanel = ({
 
     return (
         <Panel title={"Arrêt " + (fullStop?.name ?? stop?.name ?? "")} open={stop}>
-            {fullStop?.parent && (
-                <button className="button" onClick={() => navigate("/stops/" + fullStop.parent)}>
-                    Voir l'arrêt parent
+            <div className="controls">
+                <button onClick={() => setDate(Date.now())}>
+                    <i className="fa-solid fa-rotate-right" />
                 </button>
-            )}
+                {fullStop?.parent && (
+                    <button className="button" onClick={() => navigate("/stops/" + fullStop.parent)}>
+                        Voir l'arrêt parent
+                    </button>
+                )}
+            </div>
 
             <div className="section-title">Lignes</div>
             <div className="lines">
@@ -180,6 +193,7 @@ export const TripPanel = ({
 }) => {
     const navigate = useNavigate();
     const [fullTrip, setFullTrip] = useState<any>(null);
+    const [date, setDate] = useState(Date.now());
 
     useEffect(() => {
         if (!tripId) return;
@@ -192,7 +206,7 @@ export const TripPanel = ({
                 setForcedLines(res ? [res.line.id] : null);
             });
         return () => setForcedLines(null);
-    }, [tripId]);
+    }, [tripId, date]);
 
     const vehicle = Object.values(trackedVehicles).find((v) => v.fullTripId === fullTrip?.fullTripId) ?? null;
     const delayed = Math.abs(vehicle?.delay ?? 0) > 60;
@@ -200,9 +214,14 @@ export const TripPanel = ({
 
     return (
         <Panel title={"Trajet - Ligne " + (fullTrip?.line.shortName ?? "")} open={tripId && fullTrip}>
-            <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
-                Voir la ligne
-            </button>
+            <div className="controls">
+                <button onClick={() => setDate(Date.now())}>
+                    <i className="fa-solid fa-rotate-right" />
+                </button>
+                <button className="button" onClick={() => navigate("/lines/" + fullTrip?.line.id)}>
+                    Voir la ligne
+                </button>
+            </div>
 
             {fullTrip && (
                 <div className="trips">

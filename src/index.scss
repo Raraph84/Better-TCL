@@ -98,6 +98,24 @@ body {
             margin-top: 12px;
             margin-bottom: 4px;
         }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-top: -6px;
+
+            button {
+                padding: 0 8px;
+            }
+
+            .button {
+                width: max-content;
+                padding: 6px 12px;
+                border-radius: 12px;
+                background-color: rgba(255, 255, 255, 0.1);
+                font-size: 14px;
+            }
+        }
     }
 }
 
