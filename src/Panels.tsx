@@ -15,7 +15,11 @@ export const LinePanel = ({
     const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
 
     useEffect(() => {
-        if (!line) return;
+        if (!line) {
+            setDate(Date.now());
+            return;
+        }
+        setDirection("outbound");
         setFullLine(null);
         setForcedLines([line.id]);
         fetch(import.meta.env.VITE_SERVER_HOST + "/lines/" + line.id + "?date=" + date)
@@ -107,7 +111,11 @@ export const StopPanel = ({
     const [showPreviousStops, setShowPreviousStops] = useState(false);
 
     useEffect(() => {
-        if (!stop) return;
+        if (!stop) {
+            setDate(Date.now());
+            return;
+        }
+        setShowPreviousStops(false);
         setFullStop(null);
         setForcedLines([]);
         fetch(import.meta.env.VITE_SERVER_HOST + "/stops/" + stop.id + "?date=" + date)

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export const SearchBar = ({ stops, onSelect }: { stops: any[] | null; onSelect: (stop: any) => void }) => {
+    const { pathname } = useLocation();
     const navigate = useNavigate();
     const [query, setQuery] = useState("");
     const [focused, setFocused] = useState(false);
@@ -39,7 +40,10 @@ export const SearchBar = ({ stops, onSelect }: { stops: any[] | null; onSelect: 
                     placeholder="Rechercher"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    onFocus={() => setFocused(true)}
+                    onFocus={() => {
+                        if (pathname !== "/") navigate("/");
+                        setFocused(true);
+                    }}
                     onKeyDown={(event) => event.key === "Enter" && results[0] && select(results[0])}
                 />
                 {query && (

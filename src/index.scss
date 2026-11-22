@@ -125,10 +125,10 @@ body {
     position: fixed;
     top: 16px;
     left: 16px;
-    width: min(320px, calc(100vw - 32px));
+    width: 350px;
 
     @media (max-width: 768px) {
-        left: 16px;
+        top: 24px;
         right: 16px;
         width: auto;
     }
@@ -137,7 +137,9 @@ body {
         display: flex;
         border-radius: 24px;
         background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(6px);
         border: white 2px solid;
+        height: 48px;
 
         input {
             flex: 1;
@@ -147,7 +149,7 @@ body {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 14px;
+            padding: 0 14px;
         }
     }
 
@@ -195,6 +197,7 @@ body {
         align-items: center;
         justify-content: center;
         background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(6px);
     }
 }
 
