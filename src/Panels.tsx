@@ -59,7 +59,7 @@ export const LinePanel = ({
                             </div>
                         )}
                         <button onClick={() => navigate("/trips/" + trip.fullTripId)}>
-                            <span>
+                            <span className="line-full">
                                 <LineBadge line={fullLine} />{" "}
                                 {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
                             </span>
@@ -154,7 +154,7 @@ export const StopPanel = ({
                 {fullStop?.lines.map((line: any) =>
                     line.directions.map((direction: any) => (
                         <button key={line.id + "-" + direction} onClick={() => navigate("/lines/" + line.id)}>
-                            <span>
+                            <span className="line-full">
                                 <LineBadge line={line} />{" "}
                                 {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
                             </span>
@@ -192,7 +192,7 @@ export const StopPanel = ({
                                     : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
                             }
                         >
-                            <span>
+                            <span className="line-full">
                                 <LineBadge line={fullStop.lines.find((line: any) => line.id === nextStop.lineId)} />{" "}
                                 {nextStop.directionStop.name}
                             </span>
@@ -251,7 +251,7 @@ export const TripPanel = ({
             {fullTrip && (
                 <div className="trips">
                     <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
-                        <span>
+                        <span className="line-full">
                             <LineBadge line={fullTrip.line} /> {fullTrip.stops.slice(-1)[0].stop.name}
                         </span>
                         <span style={{ whiteSpace: "nowrap" }}>

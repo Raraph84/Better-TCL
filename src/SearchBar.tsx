@@ -77,7 +77,12 @@ export const SearchBar = ({
                         if (pathname !== "/") navigate("/");
                         setFocused(true);
                     }}
-                    onKeyDown={(event) => event.key === "Enter" && results[0] && select(results[0])}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter" && results[0]) {
+                            select(results[0]);
+                            event.currentTarget.blur();
+                        }
+                    }}
                 />
                 {query && (
                     <button onClick={() => setQuery("")}>
