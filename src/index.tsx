@@ -175,7 +175,9 @@ const App = () => {
             </MapContainer>
 
             <SearchBar
+                lines={lines}
                 stops={stops}
+                vehicles={Object.values(trackedVehicles)}
                 onSelect={(stop) => mapRef.current?.flyTo([stop.lat, stop.lon], 16, { duration: 1 })}
             />
 

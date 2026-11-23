@@ -321,7 +321,7 @@ const isTomorrow = (date: Date) => {
     return isSameDay(date, tomorrow);
 };
 
-const LineBadge = ({ line }: { line: any }) => (
+export const LineBadge = ({ line }: { line: any }) => (
     <span
         className="line-badge"
         style={{ backgroundColor: "#" + line.color, color: "#" + (line.textColor || "FFFFFF") }}

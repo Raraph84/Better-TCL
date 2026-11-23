@@ -295,6 +295,12 @@ body {
     }
 }
 
+.line-full {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .line-badge {
     padding: 1px 5px;
     border-radius: 8px;
