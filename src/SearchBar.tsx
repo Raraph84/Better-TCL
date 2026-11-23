@@ -26,10 +26,15 @@ export const SearchBar = ({
         if (!search) return [];
 
         const found: SearchResult[] = [];
+        for (const stop of stops) if (stop.id.toLowerCase() === search) found.push({ type: "stop", data: stop });
+        for (const line of lines) if (line.id.toLowerCase() === search) found.push({ type: "line", data: line });
+
         for (const line of lines)
-            if (line.shortName.toLowerCase().includes(search)) found.push({ type: "line", data: line });
+            if (line.shortName.toLowerCase().includes(search) && !found.some((r) => r.data === line))
+                found.push({ type: "line", data: line });
         for (const stop of stops)
-            if (!stop.parent && stop.name.toLowerCase().includes(search)) found.push({ type: "stop", data: stop });
+            if (!stop.parent && stop.name.toLowerCase().includes(search) && !found.some((r) => r.data === stop))
+                found.push({ type: "stop", data: stop });
 
         return found.slice(0, 8);
     }, [query, stops, lines]);

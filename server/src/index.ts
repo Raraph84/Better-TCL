@@ -66,7 +66,11 @@ setInterval(updateGtfs, 60 * 60 * 1000);
 app.get("/lines/geojson", (req, res) => res.json(linesGeojson));
 
 app.get("/lines", (req, res) => {
-    res.json({ lines: Object.values(gtfs!.lines).map((line) => getLine(gtfs!, line)) });
+    res.json({
+        lines: Object.values(gtfs!.lines)
+            .sort((a, b) => a.shortName.localeCompare(b.shortName, undefined, { numeric: true }))
+            .map((line) => getLine(gtfs!, line))
+    });
 });
 
 app.get("/lines/:id", (req, res) => {
