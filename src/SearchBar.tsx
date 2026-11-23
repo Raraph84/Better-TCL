@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LineBadge } from "./Panels.js";
 
-type SearchResult = { type: "stop" | "line"; data: any };
+type SearchResult = { type: "stop" | "line" | "vehicle"; data: any };
 
 export const SearchBar = ({
     lines,
@@ -28,6 +28,8 @@ export const SearchBar = ({
         const found: SearchResult[] = [];
         for (const stop of stops) if (stop.id.toLowerCase() === search) found.push({ type: "stop", data: stop });
         for (const line of lines) if (line.id.toLowerCase() === search) found.push({ type: "line", data: line });
+        for (const vehicle of vehicles)
+            if (vehicle.id.toLowerCase() === search) found.push({ type: "vehicle", data: vehicle });
 
         for (const line of lines)
             if (line.shortName.toLowerCase().includes(search) && !found.some((r) => r.data === line))
@@ -37,7 +39,7 @@ export const SearchBar = ({
                 found.push({ type: "stop", data: stop });
 
         return found.slice(0, 8);
-    }, [query, stops, lines]);
+    }, [query]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -54,7 +56,11 @@ export const SearchBar = ({
         if (result.type === "stop") {
             onSelect(result.data);
             navigate("/stops/" + result.data.id);
-        } else navigate("/lines/" + result.data.id);
+        } else if (result.type === "line") navigate("/lines/" + result.data.id);
+        else {
+            onSelect({ lat: result.data.latitude, lon: result.data.longitude });
+            navigate("/trips/" + result.data.fullTripId);
+        }
     };
 
     return (
@@ -89,6 +95,11 @@ export const SearchBar = ({
                                 {result.type === "line" ? (
                                     <span className="line-full">
                                         <LineBadge line={result.data} /> {result.data.longName}
+                                    </span>
+                                ) : result.type === "vehicle" ? (
+                                    <span className="line-full">
+                                        <LineBadge line={lines.find((line) => line.id === result.data.lineId)} />{" "}
+                                        Véhicule {result.data.id}
                                     </span>
                                 ) : (
                                     result.data.name
