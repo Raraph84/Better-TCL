@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { LineBadge } from "./Panels.js";
+import { LineFull } from "./Panels.js";
 
 type SearchResult = { type: "stop" | "line" | "vehicle"; data: any };
 
@@ -98,14 +98,11 @@ export const SearchBar = ({
                         results.map((result, i) => (
                             <button key={result.type + "-" + result.data.id} onClick={() => select(result)}>
                                 {result.type === "line" ? (
-                                    <span className="line-full">
-                                        <LineBadge line={result.data} /> {result.data.longName}
-                                    </span>
+                                    <LineFull line={result.data}>{result.data.longName}</LineFull>
                                 ) : result.type === "vehicle" ? (
-                                    <span className="line-full">
-                                        <LineBadge line={lines.find((line) => line.id === result.data.lineId)} />{" "}
+                                    <LineFull line={lines.find((line) => line.id === result.data.lineId)}>
                                         Véhicule {result.data.id}
-                                    </span>
+                                    </LineFull>
                                 ) : (
                                     result.data.name
                                 )}

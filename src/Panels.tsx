@@ -48,24 +48,13 @@ export const LinePanel = ({
             <div className="trips">
                 {fullLine?.trips.map((trip: any, i: number) => (
                     <Fragment key={i}>
-                        {!isSameDay(
-                            new Date(trip.stops[0].time),
-                            new Date(fullLine.trips[i - 1]?.stops[0].time ?? Date.now())
-                        ) && (
-                            <div className="section-subtitle">
-                                {isTomorrow(new Date(trip.stops[0].time))
-                                    ? "Demain"
-                                    : formatDate(new Date(trip.stops[0].time))}
-                            </div>
-                        )}
+                        <AnotherDay time={trip.stops[0].time} prevTime={fullLine.trips[i - 1]?.stops[0].time ?? null} />
                         <button onClick={() => navigate("/trips/" + trip.fullTripId)}>
-                            <span className="line-full">
-                                <LineBadge line={fullLine} />{" "}
+                            <LineFull line={fullLine}>
                                 {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
-                            </span>
+                            </LineFull>
                             <span style={{ whiteSpace: "nowrap" }}>
-                                {formatTime(new Date(trip.stops[0].time))} -{" "}
-                                {formatTime(new Date(trip.stops.slice(-1)[0].time))}
+                                <Time time={trip.stops[0].time} /> - <Time time={trip.stops.slice(-1)[0].time} />
                             </span>
                         </button>
                     </Fragment>
@@ -154,16 +143,16 @@ export const StopPanel = ({
                 {fullStop?.lines.map((line: any) =>
                     line.directions.map((direction: any) => (
                         <button key={line.id + "-" + direction} onClick={() => navigate("/lines/" + line.id)}>
-                            <span className="line-full">
-                                <LineBadge line={line} />{" "}
+                            <LineFull line={line}>
                                 {line.stops.filter((s: any) => s.direction === direction).slice(-1)[0].name}
-                            </span>
-                            <span>
+                            </LineFull>
+                            <span style={{ whiteSpace: "nowrap", display: "flex", gap: "6px" }}>
                                 {line.nextStops
                                     .filter((s: any) => s.direction === direction)
-                                    .map((s: any) => formatTime(new Date(s.time)))
                                     .slice(0, 2)
-                                    .join(" ")}
+                                    .map((s: any) => (
+                                        <Time time={s.time} key={s.time} />
+                                    ))}
                             </span>
                         </button>
                     ))
@@ -179,11 +168,7 @@ export const StopPanel = ({
             <div className="next-stops">
                 {nextStops?.map((nextStop: any, i: number) => (
                     <Fragment key={i}>
-                        {!isSameDay(new Date(nextStop.time), new Date(nextStops[i - 1]?.time ?? Date.now())) && (
-                            <div className="section-subtitle">
-                                {isTomorrow(new Date(nextStop.time)) ? "Demain" : formatDate(new Date(nextStop.time))}
-                            </div>
-                        )}
+                        <AnotherDay time={nextStop.time} prevTime={nextStops[i - 1]?.time ?? null} />
                         <button
                             onClick={() => navigate("/trips/" + nextStop.fullTripId)}
                             style={
@@ -192,11 +177,10 @@ export const StopPanel = ({
                                     : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
                             }
                         >
-                            <span className="line-full">
-                                <LineBadge line={fullStop.lines.find((line: any) => line.id === nextStop.lineId)} />{" "}
+                            <LineFull line={fullStop.lines.find((line: any) => line.id === nextStop.lineId)}>
                                 {nextStop.directionStop.name}
-                            </span>
-                            <span>{formatTime(new Date(nextStop.time))}</span>
+                            </LineFull>
+                            <Time time={nextStop.time} />
                         </button>
                     </Fragment>
                 ))}
@@ -251,12 +235,9 @@ export const TripPanel = ({
             {fullTrip && (
                 <div className="trips">
                     <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
-                        <span className="line-full">
-                            <LineBadge line={fullTrip.line} /> {fullTrip.stops.slice(-1)[0].stop.name}
-                        </span>
+                        <LineFull line={fullTrip.line}>{fullTrip.stops.slice(-1)[0].stop.name}</LineFull>
                         <span style={{ whiteSpace: "nowrap" }}>
-                            {formatTime(new Date(fullTrip.stops[0].time))} -{" "}
-                            {formatTime(new Date(fullTrip.stops.slice(-1)[0].time))}
+                            <Time time={fullTrip.stops[0].time} /> - <Time time={fullTrip.stops.slice(-1)[0].time} />
                         </span>
                     </button>
                 </div>
@@ -276,24 +257,13 @@ export const TripPanel = ({
                         key={stopTime.stop.id}
                         onClick={() => navigate("/stops/" + stopTime.stop.id)}
                         style={
-                            stopTime.time + (vehicle?.delay ?? 0) * 1000 >= Date.now() - 60 * 1000
+                            stopTime.time + (vehicle?.delay ?? 0) * 1000 >= date - 60 * 1000
                                 ? {}
                                 : { backgroundColor: "rgba(255, 255, 255, 0.1)" }
                         }
                     >
                         <span>{stopTime.stop.name}</span>
-                        <span>
-                            {delayed ? (
-                                <>
-                                    <s>{formatTime(new Date(stopTime.time))}</s>{" "}
-                                    <span style={{ color: delayColor }}>
-                                        {formatTime(new Date(stopTime.time + vehicle.delay * 1000))}
-                                    </span>
-                                </>
-                            ) : (
-                                formatTime(new Date(stopTime.time))
-                            )}
-                        </span>
+                        {vehicle ? <Time time={stopTime.time} delay={vehicle.delay} /> : <Time time={stopTime.time} />}
                     </button>
                 ))}
             </div>
@@ -315,17 +285,37 @@ const formatDate = (date: Date) =>
 const isSameDay = (a: Date, b: Date) =>
     a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
 
-const isTomorrow = (date: Date) => {
+const AnotherDay = ({ time, prevTime }: { time: number; prevTime: number | null }) => {
+    if (isSameDay(new Date(time), new Date(prevTime ?? Date.now()))) return null;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return isSameDay(date, tomorrow);
+    return (
+        <div className="section-subtitle">
+            {isSameDay(new Date(time), tomorrow) ? "Demain" : formatDate(new Date(time))}
+        </div>
+    );
 };
 
-export const LineBadge = ({ line }: { line: any }) => (
-    <span
-        className="line-badge"
-        style={{ backgroundColor: "#" + line.color, color: "#" + (line.textColor || "FFFFFF") }}
-    >
-        {line.shortName}
+export const LineFull = ({ line, children }: { line: any; children: any }) => (
+    <span className="line-full">
+        <span
+            className="line-badge"
+            style={{ backgroundColor: "#" + line.color, color: "#" + (line.textColor || "FFFFFF") }}
+        >
+            {line.shortName}
+        </span>{" "}
+        {children}
     </span>
 );
+
+const Time = ({ time, delay = null }: { time: number; delay?: number | null }) => {
+    if (delay === null) return <span>{formatTime(new Date(time))}</span>;
+    const delayed = Math.abs(delay) > 60;
+    const delayColor = !delayed ? "#50FF50" : delay > 0 ? "#FF5050" : "#5050FF";
+    return (
+        <span>
+            {delayed && <s>{formatTime(new Date(time))}</s>}{" "}
+            <span style={{ color: delayColor }}>{formatTime(new Date(time + delay * 1000))}</span>
+        </span>
+    );
+};
