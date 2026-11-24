@@ -193,10 +193,12 @@ const App = () => {
 
             <LinePanel
                 line={lines?.find((line: any) => line.id === params.lineId) || null}
+                vehicles={trackedVehicles}
                 setForcedLines={setForcedLines}
             />
             <StopPanel
                 stop={stops?.find((stop: any) => stop.id === params.stopId) || null}
+                vehicles={trackedVehicles}
                 setForcedLines={setForcedLines}
             />
             <TripPanel tripId={params.tripId ?? null} vehicles={trackedVehicles} setForcedLines={setForcedLines} />

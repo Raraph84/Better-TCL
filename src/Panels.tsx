@@ -4,9 +4,11 @@ import { Panel } from "./Panel.js";
 
 export const LinePanel = ({
     line,
+    vehicles,
     setForcedLines
 }: {
     line: any;
+    vehicles: { [key: string]: any };
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const navigate = useNavigate();
@@ -54,7 +56,17 @@ export const LinePanel = ({
                                 {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
                             </LineFull>
                             <span style={{ whiteSpace: "nowrap" }}>
-                                <Time time={trip.stops[0].time} /> - <Time time={trip.stops.slice(-1)[0].time} />
+                                <Time
+                                    time={trip.stops[0].time}
+                                    delay={vehicles[trip.fullTripId]?.delay ?? null}
+                                    showTheorical={false}
+                                />
+                                {" - "}
+                                <Time
+                                    time={trip.stops.slice(-1)[0].time}
+                                    delay={vehicles[trip.fullTripId]?.delay ?? null}
+                                    showTheorical={false}
+                                />
                             </span>
                         </button>
                     </Fragment>
@@ -89,9 +101,11 @@ export const LinePanel = ({
 
 export const StopPanel = ({
     stop,
+    vehicles,
     setForcedLines
 }: {
     stop: any;
+    vehicles: { [key: string]: any };
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const navigate = useNavigate();
@@ -151,7 +165,12 @@ export const StopPanel = ({
                                     .filter((s: any) => s.direction === direction)
                                     .slice(0, 2)
                                     .map((s: any) => (
-                                        <Time time={s.time} key={s.time} />
+                                        <Time
+                                            time={s.time}
+                                            key={s.time}
+                                            delay={vehicles[s.fullTripId]?.delay ?? null}
+                                            showTheorical={false}
+                                        />
                                     ))}
                             </span>
                         </button>
@@ -180,7 +199,7 @@ export const StopPanel = ({
                             <LineFull line={fullStop.lines.find((line: any) => line.id === nextStop.lineId)}>
                                 {nextStop.directionStop.name}
                             </LineFull>
-                            <Time time={nextStop.time} />
+                            <Time time={nextStop.time} delay={vehicles[nextStop.fullTripId]?.delay ?? null} />
                         </button>
                     </Fragment>
                 ))}
@@ -308,13 +327,21 @@ export const LineFull = ({ line, children }: { line: any; children: any }) => (
     </span>
 );
 
-const Time = ({ time, delay = null }: { time: number; delay?: number | null }) => {
+const Time = ({
+    time,
+    delay = null,
+    showTheorical = true
+}: {
+    time: number;
+    delay?: number | null;
+    showTheorical?: boolean;
+}) => {
     if (delay === null) return <span>{formatTime(new Date(time))}</span>;
     const delayed = Math.abs(delay) > 60;
     const delayColor = !delayed ? "#50FF50" : delay > 0 ? "#FF5050" : "#5050FF";
     return (
         <span>
-            {delayed && <s>{formatTime(new Date(time))}</s>}{" "}
+            {delayed && showTheorical && <s>{formatTime(new Date(time))}</s>}{" "}
             <span style={{ color: delayColor }}>{formatTime(new Date(time + delay * 1000))}</span>
         </span>
     );
