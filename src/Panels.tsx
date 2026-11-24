@@ -17,10 +17,7 @@ export const LinePanel = ({
     const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
 
     useEffect(() => {
-        if (!line) {
-            setDate(Date.now());
-            return;
-        }
+        if (!line) return;
         setDirection("outbound");
         setFullLine(null);
         setForcedLines([line.id]);
@@ -29,6 +26,8 @@ export const LinePanel = ({
             .then((res) => setFullLine(res));
         return () => setForcedLines(null);
     }, [line, date]);
+
+    useEffect(() => setDate(Date.now()), [line]);
 
     const hasInbound = fullLine?.stops.some((stop: any) => stop.direction === "inbound");
     const stops = fullLine?.stops.filter((stop: any) => stop.direction === direction);
@@ -114,10 +113,7 @@ export const StopPanel = ({
     const [showPreviousStops, setShowPreviousStops] = useState(false);
 
     useEffect(() => {
-        if (!stop) {
-            setDate(Date.now());
-            return;
-        }
+        if (!stop) return;
         setShowPreviousStops(false);
         setFullStop(null);
         setForcedLines([]);
@@ -129,6 +125,8 @@ export const StopPanel = ({
             });
         return () => setForcedLines(null);
     }, [stop, date]);
+
+    useEffect(() => setDate(Date.now()), [stop]);
 
     const nextStops = fullStop?.nextStops.filter(
         (stop: any) => showPreviousStops || stop.time >= Date.now() - 60 * 1000
