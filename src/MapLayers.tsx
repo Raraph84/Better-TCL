@@ -142,7 +142,7 @@ export const VehiclesLayer = ({
         const line = lines.find((line: any) => line.id === vehicle.lineId);
         return (
             <VehicleMarker
-                key={vehicle.id}
+                key={vehicle.fullTripId}
                 vehicle={vehicle}
                 color={`#${line?.color ?? "aaaaaa"}`}
                 onClick={() => navigate("/trips/" + vehicle.fullTripId)}

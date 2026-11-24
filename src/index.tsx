@@ -56,7 +56,17 @@ const App = () => {
             ws.addEventListener("message", (event) => {
                 const message = JSON.parse(event.data);
                 if (message.event === "vehicle")
-                    setTrackedVehicles((prev) => ({ ...prev, [message.data.id]: message.data }));
+                    setTrackedVehicles((prev) => {
+                        const newState = { ...prev };
+                        newState[message.data.fullTripId] = message.data;
+                        return newState;
+                    });
+                else if (message.event === "vehicleRemoved")
+                    setTrackedVehicles((prev) => {
+                        const newState = { ...prev };
+                        delete newState[message.data.fullTripId];
+                        return newState;
+                    });
             });
             ws.addEventListener("close", (event) => {
                 console.log("WebSocket closed, reconnecting...", event.code, event.reason);
@@ -189,11 +199,7 @@ const App = () => {
                 stop={stops?.find((stop: any) => stop.id === params.stopId) || null}
                 setForcedLines={setForcedLines}
             />
-            <TripPanel
-                tripId={params.tripId ?? null}
-                trackedVehicles={trackedVehicles}
-                setForcedLines={setForcedLines}
-            />
+            <TripPanel tripId={params.tripId ?? null} vehicles={trackedVehicles} setForcedLines={setForcedLines} />
 
             <div className="right-buttons">
                 <button onClick={() => navigate("/filters")}>

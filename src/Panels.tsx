@@ -193,11 +193,11 @@ export const StopPanel = ({
 
 export const TripPanel = ({
     tripId,
-    trackedVehicles,
+    vehicles,
     setForcedLines
 }: {
     tripId: string | null;
-    trackedVehicles: { [key: string]: any };
+    vehicles: { [key: string]: any };
     setForcedLines: (lines: string[] | null) => void;
 }) => {
     const navigate = useNavigate();
@@ -217,7 +217,7 @@ export const TripPanel = ({
         return () => setForcedLines(null);
     }, [tripId, date]);
 
-    const vehicle = Object.values(trackedVehicles).find((v) => v.fullTripId === fullTrip?.fullTripId) ?? null;
+    const vehicle = vehicles[fullTrip?.fullTripId] ?? null;
     const delayed = Math.abs(vehicle?.delay ?? 0) > 60;
     const delayColor = !delayed ? "#50FF50" : vehicle?.delay > 0 ? "#FF5050" : "#5050FF";
 

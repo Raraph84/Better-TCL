@@ -148,12 +148,14 @@ setInterval(async () => {
     });
 
     for (const trackedVehicleKey in trackedVehicles) {
-        if (vehicles.some((vehicle) => vehicle.id === trackedVehicleKey)) continue;
+        if (vehicles.some((vehicle) => vehicle.fullTripId === trackedVehicleKey)) continue;
+        for (const client of trackingWss.clients)
+            client.send(JSON.stringify({ event: "vehicleRemoved", data: trackedVehicles[trackedVehicleKey] }));
         delete trackedVehicles[trackedVehicleKey];
     }
     for (const vehicle of vehicles) {
-        if (trackedVehicles[vehicle.id]?.time === vehicle.time) continue;
-        trackedVehicles[vehicle.id] = vehicle;
+        if (trackedVehicles[vehicle.fullTripId]?.time === vehicle.time) continue;
+        trackedVehicles[vehicle.fullTripId] = vehicle;
         for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
     }
 }, 10_000);
