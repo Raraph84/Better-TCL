@@ -1,5 +1,7 @@
 import { parseISO8601Duration, toDate } from "./utils.js";
 
+const decode = (s: string) => s.replace(/_x([0-9A-Fa-f]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
 export const getVehicleMonitoring = async () => {
     let res;
     try {
@@ -17,7 +19,9 @@ export const getVehicleMonitoring = async () => {
     return (raw as any[]).map((vehicle) => {
         const rawServiceDate = vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef.value.split(":")[3];
         const serviceDate = toDate(rawServiceDate.replace(/\./g, "")).getTime();
-        const tripId = vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3];
+        const tripId = decode(
+            vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3]
+        );
         return {
             vehicleId: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
             lineId: vehicle.MonitoredVehicleJourney.LineRef.value.split(":")[3],
@@ -48,7 +52,7 @@ export const getEstimatedTimetables = async () => {
     const raw = data.Siri.ServiceDelivery.EstimatedTimetableDelivery?.[0].EstimatedJourneyVersionFrame;
     return ((raw?.[0].EstimatedVehicleJourney ?? []) as any[]).map((journey) => {
         const serviceDate = toDate(journey.FramedVehicleJourneyRef.DataFrameRef.value.split(":")[3].replace(/\./g, ""));
-        const tripId = journey.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3];
+        const tripId = decode(journey.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3]);
         return {
             lineId: journey.LineRef.value.split(":")[3],
             fullTripId: Buffer.from(serviceDate.getTime() + "-" + tripId).toString("base64url"),
