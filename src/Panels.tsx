@@ -54,19 +54,11 @@ export const LinePanel = ({
                             <LineFull line={fullLine}>
                                 {fullLine.stops.find((s: any) => s.id === trip.stops.slice(-1)[0].stopId).name}
                             </LineFull>
-                            <span style={{ whiteSpace: "nowrap" }}>
-                                <Time
-                                    time={trip.stops[0].time}
-                                    delay={vehicles[trip.fullTripId]?.delay ?? null}
-                                    showTheorical={false}
-                                />
-                                {" - "}
-                                <Time
-                                    time={trip.stops.slice(-1)[0].time}
-                                    delay={vehicles[trip.fullTripId]?.delay ?? null}
-                                    showTheorical={false}
-                                />
-                            </span>
+                            <TimeRange
+                                aTime={trip.stops[0].time}
+                                bTime={trip.stops.slice(-1)[0].time}
+                                delay={vehicles[trip.fullTripId]?.delay ?? null}
+                            />
                         </button>
                     </Fragment>
                 ))}
@@ -164,8 +156,8 @@ export const StopPanel = ({
                                     .slice(0, 2)
                                     .map((s: any) => (
                                         <Time
-                                            time={s.time}
                                             key={s.time}
+                                            time={s.time}
                                             delay={vehicles[s.fullTripId]?.delay ?? null}
                                             showTheorical={false}
                                         />
@@ -253,9 +245,11 @@ export const TripPanel = ({
                 <div className="trips">
                     <button onClick={() => navigate("/lines/" + fullTrip.line.id)}>
                         <LineFull line={fullTrip.line}>{fullTrip.stops.slice(-1)[0].stop.name}</LineFull>
-                        <span style={{ whiteSpace: "nowrap" }}>
-                            <Time time={fullTrip.stops[0].time} /> - <Time time={fullTrip.stops.slice(-1)[0].time} />
-                        </span>
+                        <TimeRange
+                            aTime={fullTrip.stops[0].time}
+                            bTime={fullTrip.stops.slice(-1)[0].time}
+                            delay={vehicle?.delay ?? null}
+                        />
                     </button>
                 </div>
             )}
@@ -280,7 +274,7 @@ export const TripPanel = ({
                         }
                     >
                         <span>{stopTime.stop.name}</span>
-                        {vehicle ? <Time time={stopTime.time} delay={vehicle.delay} /> : <Time time={stopTime.time} />}
+                        <Time time={stopTime.time} delay={vehicle?.delay ?? null} />
                     </button>
                 ))}
             </div>
@@ -337,10 +331,27 @@ const Time = ({
     if (delay === null) return <span>{formatTime(new Date(time))}</span>;
     const delayed = Math.abs(delay) > 60;
     const delayColor = !delayed ? "#50FF50" : delay > 0 ? "#FF5050" : "#5050FF";
+    if (!delayed || !showTheorical)
+        return <span style={{ color: delayColor }}>{formatTime(new Date(time + delay * 1000))}</span>;
     return (
-        <span>
-            {delayed && showTheorical && <s>{formatTime(new Date(time))}</s>}{" "}
-            <span style={{ color: delayColor }}>{formatTime(new Date(time + delay * 1000))}</span>
+        <span style={{ whiteSpace: "nowrap" }}>
+            <s>{formatTime(new Date(time))}</s>
+            <span style={{ color: delayColor }}> {formatTime(new Date(time + delay * 1000))}</span>
+        </span>
+    );
+};
+
+const TimeRange = ({ aTime, bTime, delay = null }: { aTime: number; bTime: number; delay?: number | null }) => {
+    if (delay === null)
+        return (
+            <span style={{ whiteSpace: "nowrap" }}>
+                {formatTime(new Date(aTime))} - {formatTime(new Date(bTime))}
+            </span>
+        );
+    const delayColor = Math.abs(delay) <= 60 ? "#50FF50" : delay > 0 ? "#FF5050" : "#5050FF";
+    return (
+        <span style={{ color: delayColor, whiteSpace: "nowrap" }}>
+            {formatTime(new Date(aTime + (delay ?? 0) * 1000))} - {formatTime(new Date(bTime + (delay ?? 0) * 1000))}
         </span>
     );
 };
