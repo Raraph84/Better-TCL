@@ -6,7 +6,7 @@ import cors from "cors";
 import { WebSocketServer } from "ws";
 import { parseGtfs } from "./gtfs.js";
 import { getLine, getStop, getTrip } from "./processing.js";
-import { getVehicleMonitoring } from "./siri.js";
+import { getEstimatedTimetables, getVehicleMonitoring } from "./siri.js";
 
 dotenv.config({ quiet: true });
 
@@ -114,20 +114,43 @@ server.on("upgrade", (req, socket, head) => {
 
 let trackedVehicles: { [key: string]: any } = {};
 setInterval(async () => {
-    let vehicles;
+    let vehicleMonitoring;
+    let estimatedTimetables;
     try {
-        vehicles = await getVehicleMonitoring();
+        vehicleMonitoring = await getVehicleMonitoring();
+        estimatedTimetables = await getEstimatedTimetables();
     } catch (error) {
         return;
     }
 
+    for (const estimated of estimatedTimetables) {
+        if (!estimated.monitored || vehicleMonitoring.some((vehicle) => vehicle.fullTripId === estimated.fullTripId))
+            continue;
+        const lastExpected = estimated.stopTimes
+            .filter((st) => st.expectedArrivalTime)
+            .sort((a, b) => b.aimedArrivalTime - a.aimedArrivalTime)[0];
+        vehicleMonitoring.push({
+            vehicleId: null,
+            lineId: estimated.lineId,
+            fullTripId: estimated.fullTripId,
+            serviceDate: estimated.serviceDate,
+            tripId: estimated.tripId,
+            latitude: null,
+            longitude: null,
+            delay: lastExpected
+                ? Math.round((lastExpected.expectedArrivalTime! - lastExpected.aimedArrivalTime) / 1000)
+                : 0,
+            time: estimated.time
+        });
+    }
+
     for (const trackedVehicleKey in trackedVehicles) {
-        if (vehicles.some((vehicle) => vehicle.fullTripId === trackedVehicleKey)) continue;
+        if (vehicleMonitoring.some((vehicle) => vehicle.fullTripId === trackedVehicleKey)) continue;
         for (const client of trackingWss.clients)
             client.send(JSON.stringify({ event: "vehicleRemoved", data: trackedVehicles[trackedVehicleKey] }));
         delete trackedVehicles[trackedVehicleKey];
     }
-    for (const vehicle of vehicles) {
+    for (const vehicle of vehicleMonitoring) {
         if (trackedVehicles[vehicle.fullTripId]?.time === vehicle.time) continue;
         trackedVehicles[vehicle.fullTripId] = vehicle;
         for (const client of trackingWss.clients) client.send(JSON.stringify({ event: "vehicle", data: vehicle }));
