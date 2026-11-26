@@ -285,7 +285,7 @@ export const TripPanel = ({
                 ))}
             </div>
 
-            {vehicle && <div>Identifiant de véhicule: {vehicle.id}</div>}
+            {vehicle?.vehicleId && <div>Identifiant de véhicule: {vehicle.vehicleId}</div>}
         </Panel>
     );
 };

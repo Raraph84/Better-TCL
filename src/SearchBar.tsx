@@ -29,7 +29,8 @@ export const SearchBar = ({
         for (const stop of stops) if (stop.id.toLowerCase() === search) found.push({ type: "stop", data: stop });
         for (const line of lines) if (line.id.toLowerCase() === search) found.push({ type: "line", data: line });
         for (const vehicle of vehicles)
-            if (vehicle.id.toLowerCase() === search) found.push({ type: "vehicle", data: vehicle });
+            if (vehicle.vehicleId && vehicle.vehicleId.toLowerCase() === search)
+                found.push({ type: "vehicle", data: vehicle });
 
         for (const line of lines)
             if (line.shortName.toLowerCase().includes(search) && !found.some((r) => r.data === line))

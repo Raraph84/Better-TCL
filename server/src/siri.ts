@@ -19,17 +19,13 @@ export const getVehicleMonitoring = async () => {
         const serviceDate = toDate(rawServiceDate.replace(/\./g, "")).getTime();
         const tripId = vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef.split(":")[3];
         return {
-            id: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
+            vehicleId: vehicle.MonitoredVehicleJourney.VehicleRef.value.split(":")[3],
             lineId: vehicle.MonitoredVehicleJourney.LineRef.value.split(":")[3],
             fullTripId: Buffer.from(serviceDate + "-" + tripId).toString("base64url"),
             serviceDate,
             tripId,
-            direction: vehicle.MonitoredVehicleJourney.DirectionRef.value,
-            directionStopId: vehicle.MonitoredVehicleJourney.DestinationRef.value.split(":")[3],
             latitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude,
             longitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude,
-            lastStopId: vehicle.MonitoredVehicleJourney.MonitoredCall.StopPointRef.value.split(":")[3],
-            lastStopSequence: vehicle.MonitoredVehicleJourney.MonitoredCall.Order,
             delay: parseISO8601Duration(vehicle.MonitoredVehicleJourney.Delay),
             time: new Date(vehicle.RecordedAtTime).getTime()
         };

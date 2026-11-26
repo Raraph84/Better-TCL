@@ -138,6 +138,7 @@ export const VehiclesLayer = ({
 }) => {
     const navigate = useNavigate();
     return vehicles.map((vehicle) => {
+        if (!vehicle.vehicleId) return null;
         if (forcedLines && !forcedLines.includes(vehicle.lineId)) return null;
         const line = lines.find((line: any) => line.id === vehicle.lineId);
         return (
